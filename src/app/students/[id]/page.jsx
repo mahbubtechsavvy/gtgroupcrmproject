@@ -335,7 +335,7 @@ function DocumentsTab({ studentId, user }) {
             <polyline points="14 2 14 8 20 8" />
           </svg>
           <h3>No documents uploaded</h3>
-          <p>Upload documents to keep track of this student's files</p>
+          <p>Upload documents to keep track of this student&apos;s files</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -602,7 +602,7 @@ function NotesTab({ studentId, user }) {
       {loading ? <div className="empty-state"><div className="loading-spinner" /></div> : interactions.length === 0 ? (
         <div className="empty-state">
           <h3>No interactions yet</h3>
-          <p>Add notes, call records, or emails to track this student's history</p>
+          <p>Add notes, call records, or emails to track this student&apos;s history</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

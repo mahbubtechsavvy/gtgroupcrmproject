@@ -406,7 +406,7 @@ export default function DashboardPage() {
         {/* Today's Appointments */}
         <div className="card">
           <div className="card-header">
-            <h3 className="section-title">Today's Appointments</h3>
+            <h3 className="section-title">Today&apos;s Appointments</h3>
             <button className="btn btn-ghost btn-sm" onClick={() => router.push('/appointments')}>
               View All →
             </button>
