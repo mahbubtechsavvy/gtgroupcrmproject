@@ -1,0 +1,16 @@
+.studentRow {
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.studentRow:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 0;
+}
