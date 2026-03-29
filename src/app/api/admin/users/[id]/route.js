@@ -25,8 +25,15 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Check if super admin
-    const { data: profile } = await supabaseClient
+    // Execute admin action
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // Check if super admin using Admin client to bypass RLS limitations on raw token fetch
+    const { data: profile } = await supabaseAdmin
       .from('users')
       .select('role')
       .eq('id', user.id)
@@ -35,13 +42,6 @@ export async function PUT(request, { params }) {
     if (!profile || !['ceo', 'coo', 'it_manager'].includes(profile.role)) {
       return NextResponse.json({ error: 'Forbidden: Super Admin only' }, { status: 403 });
     }
-
-    // Execute admin action
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
 
     // Build update payload
     const updateData = {};
