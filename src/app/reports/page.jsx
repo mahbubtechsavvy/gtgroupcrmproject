@@ -36,7 +36,7 @@ export default function ReportsPage() {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { data: u } = await supabase.from('users').select('*, offices(*)').eq('id', session.user.id).single();
+      const { data: u } = await supabase.from('users').select('*, offices!users_office_id_fkey(*)').eq('id', session.user.id).single();
       setUser(u);
       await loadReports(u);
     };
@@ -49,7 +49,7 @@ export default function ReportsPage() {
 
     let studentQ = supabase.from('students').select(`
       id, pipeline_status, lead_source, created_at, office_id,
-      offices(id, name),
+      offices!users_office_id_fkey(id, name),
       users!assigned_to(id, full_name),
       destinations(id, country_name, flag_emoji)
     `);

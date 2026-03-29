@@ -25,7 +25,7 @@ export default function AppLayout({ children }) {
       if (!session) return;
       const { data } = await supabase
         .from('users')
-        .select('*, offices(id, name, country, city)')
+        .select('*, offices!users_office_id_fkey(id, name, country, city)')
         .eq('id', session.user.id)
         .single();
       setUser(data);

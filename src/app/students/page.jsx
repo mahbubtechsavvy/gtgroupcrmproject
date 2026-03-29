@@ -77,7 +77,7 @@ export default function StudentsPage() {
       .select(`
         id, first_name, last_name, email, phone, pipeline_status, priority, lead_source,
         created_at, updated_at,
-        offices(id, name),
+        offices!users_office_id_fkey(id, name),
         users!assigned_to(id, full_name),
         destinations(id, country_name, flag_emoji)
       `, { count: 'exact' });

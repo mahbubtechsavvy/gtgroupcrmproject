@@ -31,7 +31,7 @@ export default function PipelinePage() {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { data: u } = await supabase.from('users').select('*, offices(*)').eq('id', session.user.id).single();
+      const { data: u } = await supabase.from('users').select('*, offices!users_office_id_fkey(*)').eq('id', session.user.id).single();
       setUser(u);
 
       if (isSuperAdmin(u?.role)) {
@@ -55,7 +55,7 @@ export default function PipelinePage() {
 
     let q = supabase.from('students').select(`
       id, first_name, last_name, pipeline_status, priority, created_at,
-      offices(id, name),
+      offices!users_office_id_fkey(id, name),
       users!assigned_to(id, full_name),
       destinations(id, country_name, flag_emoji)
     `);

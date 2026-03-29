@@ -27,7 +27,7 @@ export default function AuthGuard({ children }) {
       // Get user profile
       const { data: profile } = await supabase
         .from('users')
-        .select('*, offices(id, name, country, city)')
+        .select('*, offices!users_office_id_fkey(id, name, country, city)')
         .eq('id', session.user.id)
         .single();
 

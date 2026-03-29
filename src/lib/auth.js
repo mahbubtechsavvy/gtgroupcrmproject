@@ -18,7 +18,7 @@ export async function getCurrentUser() {
   // Fetch full user profile from users table
   const { data: profile } = await supabase
     .from('users')
-    .select('*, offices(id, name, country, city)')
+    .select('*, offices!users_office_id_fkey(id, name, country, city)')
     .eq('id', user.id)
     .single();
 

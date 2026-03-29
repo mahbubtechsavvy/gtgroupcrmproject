@@ -23,7 +23,7 @@ export default function UsersPage() {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { data: u } = await supabase.from('users').select('*, offices(*)').eq('id', session.user.id).single();
+      const { data: u } = await supabase.from('users').select('*, offices!users_office_id_fkey(*)').eq('id', session.user.id).single();
       setCurrentUser(u);
       if (!isSuperAdmin(u?.role)) return;
 
@@ -36,7 +36,7 @@ export default function UsersPage() {
 
   const loadUsers = async () => {
     const supabase = getSupabaseClient();
-    let q = supabase.from('users').select('*, offices(id, name)').order('full_name');
+    let q = supabase.from('users').select('*, offices!users_office_id_fkey(id, name)').order('full_name');
     if (filterRole) q = q.eq('role', filterRole);
     if (filterOffice) q = q.eq('office_id', filterOffice);
     const { data } = await q;

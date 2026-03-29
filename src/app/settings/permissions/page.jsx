@@ -82,7 +82,7 @@ export default function PermissionsPage() {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { data: u } = await supabase.from('users').select('*, offices(*)').eq('id', session.user.id).single();
+      const { data: u } = await supabase.from('users').select('*, offices!users_office_id_fkey(*)').eq('id', session.user.id).single();
       setCurrentUser(u);
     };
     init();

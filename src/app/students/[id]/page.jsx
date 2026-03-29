@@ -30,7 +30,7 @@ export default function StudentProfile({ params }) {
     const loadData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const { data: u } = await supabase.from('users').select('*, offices(*)').eq('id', session.user.id).single();
+        const { data: u } = await supabase.from('users').select('*, offices!users_office_id_fkey(*)').eq('id', session.user.id).single();
         setUser(u);
       }
 
@@ -38,7 +38,7 @@ export default function StudentProfile({ params }) {
         .from('students')
         .select(`
           *,
-          offices(id, name, country),
+          offices!users_office_id_fkey(id, name, country),
           users!assigned_to(id, full_name, email, role),
           destinations(id, country_name, flag_emoji),
           universities(id, name),
