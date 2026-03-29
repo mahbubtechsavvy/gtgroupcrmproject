@@ -159,7 +159,8 @@ export default function PipelinePage() {
         gap: '12px', 
         overflowX: 'auto', 
         paddingBottom: '16px',
-        minHeight: '65vh'
+        overflowY: 'hidden',
+        height: 'calc(100vh - 160px)'
       }}>
         {PIPELINE_STAGES.map(stage => {
           const stageCards = stageStudents(stage.key);
@@ -168,12 +169,12 @@ export default function PipelinePage() {
             <div
               key={stage.key}
               style={{
-                flex: '1 1 0', /* Automatically squeeze and adjust by window size! */
-                minWidth: '160px', /* Won't squeeze smaller than 160px */
-                maxWidth: '300px', /* Prevent them getting massively wide on 4K */
+                flex: '1 0 250px', /* Stretches on wide monitors, scrolls gracefully on vertical monitors */
+                maxWidth: '400px', /* Prevents excessive stretching on 4K/Ultrawide monitors */
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
+                height: '100%',
               }}
               onDragOver={e => handleDragOver(e, stage.key)}
               onDrop={e => handleDrop(e, stage.key)}
