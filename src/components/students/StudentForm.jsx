@@ -111,14 +111,17 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
     const supabase = getSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
 
-    // Clean empty strings to null for UUID fields
+    // Clean empty strings to null for ALL fields so Postgres numeric/uuid columns don't crash
     const payload = { ...form };
-    ['target_destination_id', 'target_university_id', 'assigned_to', 'office_id'].forEach(f => {
-      if (!payload[f]) payload[f] = null;
+    Object.keys(payload).forEach(key => {
+      if (payload[key] === '') payload[key] = null;
     });
-    ['ielts_overall', 'ielts_listening', 'ielts_reading', 'ielts_writing', 'ielts_speaking'].forEach(f => {
-      payload[f] = payload[f] ? parseFloat(payload[f]) : null;
-    });
+
+    if (payload.ielts_overall) payload.ielts_overall = parseFloat(payload.ielts_overall);
+    if (payload.ielts_listening) payload.ielts_listening = parseFloat(payload.ielts_listening);
+    if (payload.ielts_reading) payload.ielts_reading = parseFloat(payload.ielts_reading);
+    if (payload.ielts_writing) payload.ielts_writing = parseFloat(payload.ielts_writing);
+    if (payload.ielts_speaking) payload.ielts_speaking = parseFloat(payload.ielts_speaking);
     if (payload.toefl_score) payload.toefl_score = parseInt(payload.toefl_score);
     if (payload.graduation_year) payload.graduation_year = parseInt(payload.graduation_year);
 
@@ -147,7 +150,11 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
     }
 
     setSaving(false);
-    if (!result?.error) onSaved();
+    if (result?.error) {
+      alert('Failed to save student: ' + result.error.message);
+    } else {
+      onSaved();
+    }
   };
 
   const inp = (field, type = 'text', placeholder = '') => (

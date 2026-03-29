@@ -153,34 +153,13 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      {/* Inject custom scrollbar styles for the kanban */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .kanban-scroll-container::-webkit-scrollbar {
-          height: 12px;
-        }
-        .kanban-scroll-container::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 8px;
-        }
-        .kanban-scroll-container::-webkit-scrollbar-thumb {
-          background: rgba(201, 162, 39, 0.5);
-          border-radius: 8px;
-        }
-        .kanban-scroll-container::-webkit-scrollbar-thumb:hover {
-          background: rgba(201, 162, 39, 0.8);
-        }
-      `}} />
-
       {/* Kanban Board */}
-      <div className="kanban-scroll-container" style={{ 
+      <div style={{ 
         display: 'flex', 
-        gap: '16px', 
+        gap: '12px', 
         overflowX: 'auto', 
-        paddingBottom: '16px', 
-        height: 'calc(100vh - 200px)', /* Force height so scrollbar is always on-screen */
-        scrollSnapType: 'x mandatory',
-        scrollBehavior: 'smooth',
-        WebkitOverflowScrolling: 'touch',
+        paddingBottom: '16px',
+        minHeight: '65vh'
       }}>
         {PIPELINE_STAGES.map(stage => {
           const stageCards = stageStudents(stage.key);
@@ -189,14 +168,12 @@ export default function PipelinePage() {
             <div
               key={stage.key}
               style={{
-                minWidth: '280px',
-                width: '85vw',
-                maxWidth: '320px',
-                flexShrink: 0,
+                flex: '1 1 0', /* Automatically squeeze and adjust by window size! */
+                minWidth: '160px', /* Won't squeeze smaller than 160px */
+                maxWidth: '300px', /* Prevent them getting massively wide on 4K */
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
-                scrollSnapAlign: 'center',
               }}
               onDragOver={e => handleDragOver(e, stage.key)}
               onDrop={e => handleDrop(e, stage.key)}
