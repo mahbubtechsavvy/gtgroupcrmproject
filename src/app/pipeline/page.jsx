@@ -153,13 +153,31 @@ export default function PipelinePage() {
         </div>
       </div>
 
+      {/* Inject custom scrollbar styles for the kanban */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .kanban-scroll-container::-webkit-scrollbar {
+          height: 12px;
+        }
+        .kanban-scroll-container::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+        }
+        .kanban-scroll-container::-webkit-scrollbar-thumb {
+          background: rgba(201, 162, 39, 0.5);
+          border-radius: 8px;
+        }
+        .kanban-scroll-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(201, 162, 39, 0.8);
+        }
+      `}} />
+
       {/* Kanban Board */}
       <div className="kanban-scroll-container" style={{ 
         display: 'flex', 
         gap: '16px', 
         overflowX: 'auto', 
-        paddingBottom: '24px', 
-        minHeight: '75vh',
+        paddingBottom: '16px', 
+        height: 'calc(100vh - 200px)', /* Force height so scrollbar is always on-screen */
         scrollSnapType: 'x mandatory',
         scrollBehavior: 'smooth',
         WebkitOverflowScrolling: 'touch',
