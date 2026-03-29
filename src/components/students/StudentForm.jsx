@@ -22,6 +22,13 @@ const PIPELINE_STAGES = [
 
 const SECTION_TABS = ['Personal', 'Contact', 'Academic', 'Study Preferences', 'CRM Details'];
 
+const F = ({ label, required, children }) => (
+  <div className="form-group">
+    <label className="form-label">{label}{required && ' *'}</label>
+    {children}
+  </div>
+);
+
 export default function StudentForm({ student, user, onClose, onSaved }) {
   const [activeSection, setActiveSection] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -142,13 +149,6 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
     setSaving(false);
     if (!result?.error) onSaved();
   };
-
-  const F = ({ label, required, children }) => (
-    <div className="form-group">
-      <label className="form-label">{label}{required && ' *'}</label>
-      {children}
-    </div>
-  );
 
   const inp = (field, type = 'text', placeholder = '') => (
     <input

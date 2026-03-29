@@ -154,7 +154,16 @@ export default function PipelinePage() {
       </div>
 
       {/* Kanban Board */}
-      <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '16px', minHeight: '70vh' }}>
+      <div className="kanban-scroll-container" style={{ 
+        display: 'flex', 
+        gap: '16px', 
+        overflowX: 'auto', 
+        paddingBottom: '24px', 
+        minHeight: '75vh',
+        scrollSnapType: 'x mandatory',
+        scrollBehavior: 'smooth',
+        WebkitOverflowScrolling: 'touch',
+      }}>
         {PIPELINE_STAGES.map(stage => {
           const stageCards = stageStudents(stage.key);
           const isOver = dragOverStage === stage.key;
@@ -162,12 +171,14 @@ export default function PipelinePage() {
             <div
               key={stage.key}
               style={{
-                minWidth: '240px',
-                width: '240px',
+                minWidth: '280px',
+                width: '85vw',
+                maxWidth: '320px',
                 flexShrink: 0,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
+                scrollSnapAlign: 'center',
               }}
               onDragOver={e => handleDragOver(e, stage.key)}
               onDrop={e => handleDrop(e, stage.key)}

@@ -109,6 +109,7 @@ export default function UsersPage() {
 
     await supabase.from('users').update({
       full_name: form.full_name,
+      email: emailChanged ? form.email : editUser.email,
       role: form.role,
       office_id: form.office_id || null,
       phone: form.phone || null,
