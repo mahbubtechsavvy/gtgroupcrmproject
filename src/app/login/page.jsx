@@ -27,7 +27,7 @@ export default function LoginPage() {
     }
 
     if (data?.session) {
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     }
   };
 
