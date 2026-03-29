@@ -7,7 +7,13 @@ async function check() {
     email: 'admin@gtgroup.com',
     password: '@GTgroupcrm2026'
   });
-  console.log('DATA:', JSON.stringify(data, null, 2));
-  console.log('ERROR:', error);
+  const { data: profile, error: profileError } = await supabase
+    .from('users')
+    .select('*, offices!users_office_id_fkey(id, name, country, city)')
+    .eq('id', data.user.id)
+    .single();
+
+  console.log('PROFILE:', JSON.stringify(profile, null, 2));
+  console.log('PROFILE ERROR:', profileError);
 }
 check();
