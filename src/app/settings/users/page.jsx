@@ -79,12 +79,41 @@ export default function UsersPage() {
     e.preventDefault();
     setSaving(true);
     const supabase = getSupabaseClient();
+    
+    // Check if email or password changed
+    let emailChanged = form.email && form.email !== editUser.email;
+    let passwordChanged = !!form.password;
+
+    if (emailChanged || passwordChanged) {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const res = await fetch(`/api/admin/users/${editUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          email: emailChanged ? form.email : undefined,
+          password: passwordChanged ? form.password : undefined
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert('Failed to update login credentials: ' + (errorData.error || 'Unknown error'));
+        setSaving(false);
+        return;
+      }
+    }
+
     await supabase.from('users').update({
       full_name: form.full_name,
       role: form.role,
       office_id: form.office_id || null,
       phone: form.phone || null,
     }).eq('id', editUser.id);
+    
     setSaving(false);
     setShowForm(false);
     setEditUser(null);
@@ -224,18 +253,22 @@ export default function UsersPage() {
                     <label className="form-label">Full Name *</label>
                     <input className="form-input" required value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} />
                   </div>
-                  {!editUser && (
-                    <>
-                      <div className="form-group">
-                        <label className="form-label">Email *</label>
-                        <input className="form-input" type="email" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Password *</label>
-                        <input className="form-input" type="password" required minLength={8} value={form.password} onChange={e => setForm({...form, password: e.target.value})} placeholder="Min 8 characters" />
-                      </div>
-                    </>
-                  )}
+                  <div className="form-group">
+                    <label className="form-label">Email *</label>
+                    <input className="form-input" type="email" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Password {editUser ? '' : '*'}</label>
+                    <input 
+                      className="form-input" 
+                      type="password" 
+                      required={!editUser} 
+                      minLength={8} 
+                      value={form.password} 
+                      onChange={e => setForm({...form, password: e.target.value})} 
+                      placeholder={editUser ? "Leave blank to keep current password" : "Min 8 characters"} 
+                    />
+                  </div>
                   <div className="form-group">
                     <label className="form-label">Role *</label>
                     <select className="form-select" required value={form.role} onChange={e => setForm({...form, role: e.target.value})}>

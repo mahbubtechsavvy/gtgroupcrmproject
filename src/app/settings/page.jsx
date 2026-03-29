@@ -8,7 +8,7 @@ import { isSuperAdmin } from '@/lib/permissions';
 import styles from './settings.module.css';
 
 const SETTINGS_SECTIONS = [
-  { href: '/settings', label: 'General', icon: '⚙️', desc: 'CRM name, timezone, branding', superOnly: false },
+  { href: '/settings/general', label: 'General', icon: '⚙️', desc: 'CRM name, timezone, branding', superOnly: false },
   { href: '/settings/users', label: 'User Management', icon: '👥', desc: 'Add users, assign roles and offices', superOnly: true },
   { href: '/settings/offices', label: 'Office Management', icon: '🏢', desc: 'Manage your office locations', superOnly: true },
   { href: '/settings/permissions', label: 'Permissions', icon: '🔐', desc: 'Configure role-based access control', superOnly: true },
