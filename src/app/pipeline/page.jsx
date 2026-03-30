@@ -55,7 +55,7 @@ export default function PipelinePage() {
 
     let q = supabase.from('students').select(`
       id, first_name, last_name, pipeline_status, priority, created_at,
-      offices!users_office_id_fkey(id, name),
+      offices(id, name),
       users!assigned_to(id, full_name),
       destinations(id, country_name, flag_emoji)
     `);

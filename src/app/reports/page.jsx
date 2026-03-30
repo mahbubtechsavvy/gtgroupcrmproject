@@ -49,7 +49,7 @@ export default function ReportsPage() {
 
     let studentQ = supabase.from('students').select(`
       id, pipeline_status, lead_source, created_at, office_id,
-      offices!users_office_id_fkey(id, name),
+      offices(id, name),
       users!assigned_to(id, full_name),
       destinations(id, country_name, flag_emoji)
     `);

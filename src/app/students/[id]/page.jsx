@@ -38,7 +38,7 @@ export default function StudentProfile({ params }) {
         .from('students')
         .select(`
           *,
-          offices!users_office_id_fkey(id, name, country),
+          offices(id, name, country),
           users!assigned_to(id, full_name, email, role),
           destinations(id, country_name, flag_emoji),
           universities(id, name),
