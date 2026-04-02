@@ -781,3 +781,19 @@ frame= 1923 fps= 15 q=-1.0 size=N/A time=00:02:08.20 bitrate=N/A speed=1.01x ela
 [2026-04-02T11:34:16.817Z] frame= 3788 fps= 15 q=-1.0 size=N/A time=00:04:12.60 bitrate=N/A speed=1.01x elapsed=0:04:10.67    
 [2026-04-02T11:34:17.327Z] frame= 3795 fps= 15 q=-1.0 size=N/A time=00:04:13.05 bitrate=N/A speed=1.01x elapsed=0:04:11.18    
 [2026-04-02T11:34:17.842Z] frame= 3803 fps= 15 q=-1.0 size=N/A time=00:04:13.60 bitrate=N/A speed=1.01x elapsed=0:04:11.69    
+[2026-04-02T11:34:18.357Z] frame= 3811 fps= 15 q=-1.0 size=N/A time=00:04:14.15 bitrate=N/A speed=1.01x elapsed=0:04:12.21    
+[2026-04-02T11:34:18.873Z] frame= 3818 fps= 15 q=-1.0 size=N/A time=00:04:14.60 bitrate=N/A speed=1.01x elapsed=0:04:12.72    
+[2026-04-02T11:34:19.400Z] frame= 3826 fps= 15 q=-1.0 size=N/A time=00:04:15.15 bitrate=N/A speed=1.01x elapsed=0:04:13.25    
+[2026-04-02T11:34:19.916Z] frame= 3834 fps= 15 q=-1.0 size=N/A time=00:04:15.65 bitrate=N/A speed=1.01x elapsed=0:04:13.76    
+[2026-04-02T11:34:20.428Z] frame= 3842 fps= 15 q=-1.0 size=N/A time=00:04:16.20 bitrate=N/A speed=1.01x elapsed=0:04:14.28    
+[2026-04-02T11:34:20.456Z] [hls @ 000001d2e7001840] Opening 'D:\GT CRM WEB PROJECT\gtgroupcrmproject\public\temp\streams\e08aa559-e1a8-46b1-a1e2-5217615a316c\index63.ts' for writing
+
+[2026-04-02T11:34:20.456Z] [hls @ 000001d2e7001840] Opening 'D:\GT CRM WEB PROJECT\gtgroupcrmproject\public\temp\streams\e08aa559-e1a8-46b1-a1e2-5217615a316c\index.m3u8.tmp' for writing
+
+[2026-04-02T11:34:20.943Z] frame= 3849 fps= 15 q=-1.0 size=N/A time=00:04:16.65 bitrate=N/A speed=1.01x elapsed=0:04:14.79    
+[2026-04-02T11:34:21.461Z] frame= 3857 fps= 15 q=-1.0 size=N/A time=00:04:17.20 bitrate=N/A speed=1.01x elapsed=0:04:15.31    
+[2026-04-02T11:34:21.971Z] frame= 3865 fps= 15 q=-1.0 size=N/A time=00:04:17.75 bitrate=N/A speed=1.01x elapsed=0:04:15.82    
+[2026-04-02T11:34:22.485Z] frame= 3872 fps= 15 q=-1.0 size=N/A time=00:04:18.20 bitrate=N/A speed=1.01x elapsed=0:04:16.33    
+[2026-04-02T11:34:23.003Z] frame= 3881 fps= 15 q=-1.0 size=N/A time=00:04:18.80 bitrate=N/A speed=1.01x elapsed=0:04:16.85    
+[2026-04-02T11:34:23.517Z] frame= 3888 fps= 15 q=-1.0 size=N/A time=00:04:19.25 bitrate=N/A speed=1.01x elapsed=0:04:17.36    
+[2026-04-02T11:34:24.030Z] frame= 3896 fps= 15 q=-1.0 size=N/A time=00:04:19.80 bitrate=N/A speed=1.01x elapsed=0:04:17.88    
