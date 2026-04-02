@@ -59,16 +59,38 @@ class StreamManager {
       playlistPath
     ];
 
+    // Robust check for FFMPEG_PATH
+    let ffmpegPath = process.env.FFMPEG_PATH;
+    
+    // If not found in process.env, try to read it directly from .env.local as a fallback
+    if (!ffmpegPath) {
+      try {
+        const envContent = fs.readFileSync(path.join(process.cwd(), '.env.local'), 'utf8');
+        const match = envContent.match(/FFMPEG_PATH=(.+)/);
+        if (match) ffmpegPath = match[1].trim();
+      } catch (e) {
+        console.error("Could not read .env.local directly:", e);
+      }
+    }
+
+    ffmpegPath = ffmpegPath || 'ffmpeg';
+
     console.log(`Starting FFmpeg for camera ${cameraId}...`);
-    const ffmpegProcess = spawn('ffmpeg', args);
+    console.log(`Final FFmpeg Path: ${ffmpegPath}`);
+    console.log(`Full Command: ${ffmpegPath} ${args.join(' ')}`);
+    const ffmpegProcess = spawn(ffmpegPath, args);
+
+    const logStream = fs.createWriteStream(path.join(this.tempDir, `${cameraId}_error.log`), { flags: 'a' });
 
     ffmpegProcess.stderr.on('data', (data) => {
       // ffmpeg writes most logs to stderr
-      // console.log(`[FFmpeg ${cameraId}] ${data}`);
+      logStream.write(`[${new Date().toISOString()}] ${data}\n`);
     });
 
     ffmpegProcess.on('close', (code) => {
       console.log(`FFmpeg for camera ${cameraId} exited with code ${code}`);
+      logStream.write(`[${new Date().toISOString()}] PROCESS EXITED WITH CODE ${code}\n`);
+      logStream.end();
       this.activeStreams.delete(cameraId);
     });
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Settings, ShieldCheck, Globe, RefreshCcw, CameraOff, Monitor } from 'lucide-react';
+import { Settings, ShieldCheck, Globe, RefreshCcw, CameraOff, Monitor, AlertCircle } from 'lucide-react';
 import CameraPlayer from '@/components/cctv/CameraPlayer';
 import DeviceManager from '@/components/cctv/DeviceManager';
 import styles from './CctvPage.module.css';
@@ -20,36 +20,48 @@ export default function CctvPage() {
   const [showManager, setShowManager] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [streams, setStreams] = useState({}); // deviceId -> streamUrl
+  const [errorStatus, setErrorStatus] = useState(null);
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = '/login';
-        return;
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+          console.error("Auth Error:", authError);
+          window.location.href = '/login';
+          return;
+        }
+
+        // Fetch user profile with role
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('*, offices!users_office_id_fkey(name)')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileError) throw profileError;
+        setUser(profile);
+
+        // Fetch offices
+        const { data: officesData, error: officesError } = await supabase
+          .from('offices')
+          .select('*')
+          .order('name');
+        
+        if (officesError) throw officesError;
+        setOffices(officesData || []);
+
+        // Fetch devices
+        await fetchDevices();
+      } catch (err) {
+        console.error("CCTV Init Error:", err);
+        setErrorStatus(err.message || 'Failed to initialize CCTV module. Ensure database migration was applied.');
+        setIsLoading(false);
       }
-
-      // Fetch user profile with role
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*, offices(name)')
-        .eq('id', user.id)
-        .single();
-      
-      setUser(profile);
-
-      // Fetch offices
-      const { data: officesData } = await supabase
-        .from('offices')
-        .select('*')
-        .order('name');
-      setOffices(officesData || []);
-
-      // Fetch devices
-      fetchDevices();
     };
 
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchDevices = async () => {
@@ -99,7 +111,20 @@ export default function CctvPage() {
 
   const isSuperAdmin = ['ceo', 'coo', 'it_manager'].includes(user?.role);
 
-  if (isLoading && !user) return <div className={styles.loading}>Verifying access...</div>;
+  if (isLoading && !user && !errorStatus) return <div className={styles.loading}>Verifying access...</div>;
+
+  if (errorStatus) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.errorContainer}>
+          <AlertCircle size={48} color="#ef4444" />
+          <h2>Page Error</h2>
+          <p>{errorStatus}</p>
+          <button onClick={() => window.location.reload()} className={styles.filterBtn}>Reload Page</button>
+        </div>
+      </div>
+    );
+  }
 
   const filteredDevices = activeOfficeId === 'all' 
     ? devices 

@@ -12,7 +12,21 @@ const SALT_LENGTH = 64;
 const TAG_LENGTH = 16;
 
 const getKey = () => {
-  const key = process.env.CCTV_ENCRYPTION_KEY;
+  let key = process.env.CCTV_ENCRYPTION_KEY;
+
+  // Fallback: Read directly from .env.local if missing or potentially stale
+  if (!key || key.length < 32) {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const envContent = fs.readFileSync(path.join(process.cwd(), '.env.local'), 'utf8');
+      const match = envContent.match(/CCTV_ENCRYPTION_KEY=(.+)/);
+      if (match) key = match[1].trim();
+    } catch (e) {
+      // Ignore read errors
+    }
+  }
+
   if (!key || key.length < 32) {
     throw new Error('CCTV_ENCRYPTION_KEY environment variable is missing or too short. MUST be at least 32 characters.');
   }
