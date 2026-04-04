@@ -28,7 +28,9 @@ export async function GET() {
   const { data, error } = await supabase
     .from('cctv_devices')
     .select('*, offices(name, city)')
-    .order('created_at', { ascending: false });
+    .order('office_id', { ascending: true })
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   
@@ -65,6 +67,16 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
+  // Get the next display_order for this office
+  const { data: existing } = await supabase
+    .from('cctv_devices')
+    .select('display_order')
+    .eq('office_id', office_id)
+    .order('display_order', { ascending: false })
+    .limit(1);
+  
+  const nextOrder = (existing?.[0]?.display_order ?? -1) + 1;
+
   // Encrypt the password before storing
   const encryptedPassword = encrypt(password);
 
@@ -79,6 +91,7 @@ export async function POST(req) {
       password: encryptedPassword,
       channel: parseInt(channel) || 1,
       subtype: parseInt(subtype) || 1,
+      display_order: nextOrder,
     }])
     .select()
     .single();

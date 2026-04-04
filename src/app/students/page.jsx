@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase';
 import { useUser } from '@/components/layout/AppLayout';
 import { isSuperAdmin, can } from '@/lib/permissions';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import StudentForm from '@/components/students/StudentForm';
 import styles from './students.module.css';
 
@@ -75,8 +77,7 @@ export default function StudentsPage() {
     let query = supabase
       .from('students')
       .select(`
-        id, first_name, last_name, email, phone, pipeline_status, priority, lead_source,
-        created_at, updated_at,
+        *,
         offices(id, name),
         users!assigned_to(id, full_name),
         destinations(id, country_name, flag_emoji)
@@ -130,6 +131,57 @@ export default function StudentsPage() {
     return `${Math.floor(days / 30)}mo ago`;
   };
 
+  const handleExportCSV = async () => {
+    if (students.length === 0) return alert("No students to export.");
+
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Students Database');
+
+      sheet.mergeCells('A1', 'O1');
+      const titleCell = sheet.getCell('A1');
+      titleCell.value = 'GT Group Bangladesh Student Data';
+      titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2E59' } };
+      titleCell.alignment = { horizontal: 'center' };
+
+      const headerRow = sheet.getRow(2);
+      headerRow.values = [
+        'Given Name', 'Surname', 'Email', 'Phone', 'WhatsApp', 'Father Mobile', 'Mother Mobile',
+        'Status', 'Priority', 'Source', 'Nationality', 'Passport Number', 'Office', 'Counselor', 'Target Destination'
+      ];
+      headerRow.font = { bold: true };
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6B325' } };
+
+      students.forEach(s => {
+        sheet.addRow([
+          s.first_name || '',
+          s.last_name || '',
+          s.email || '',
+          s.phone ? ` ${s.phone}` : '',
+          s.whatsapp ? ` ${s.whatsapp}` : '',
+          s.father_mobile ? ` ${s.father_mobile}` : '',
+          s.mother_mobile ? ` ${s.mother_mobile}` : '',
+          PIPELINE_STATUS_LABELS[s.pipeline_status]?.label || s.pipeline_status || '',
+          s.priority || '',
+          s.lead_source || '',
+          s.nationality || '',
+          s.passport_number || '',
+          s.offices?.name || '—',
+          s.users?.full_name || '—',
+          s.destinations?.country_name || '—'
+        ]);
+      });
+
+      sheet.columns.forEach(col => col.width = 18);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), `Students_Export_${new Date().toISOString().slice(0,10)}.xlsx`);
+    } catch (e) {
+      alert("Error generating Excel file: " + e.message);
+    }
+  };
+
   const totalPages = Math.ceil(total / PER_PAGE);
 
   return (
@@ -141,7 +193,7 @@ export default function StudentsPage() {
           <p className="page-subtitle">{total} total students</p>
         </div>
         <div className="flex gap-12">
-          <button className="btn btn-secondary btn-sm" onClick={() => alert('CSV export coming soon')}>
+          <button className="btn btn-secondary btn-sm" onClick={handleExportCSV}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
@@ -268,11 +320,11 @@ export default function StudentsPage() {
                     <td>
                       <div className="flex gap-12" style={{ alignItems: 'center' }}>
                         <div className="avatar avatar-sm" style={{ flexShrink: 0 }}>
-                          {student.first_name?.charAt(0)}{student.last_name?.charAt(0)}
+                          {student.last_name?.charAt(0)}{student.first_name?.charAt(0)}
                         </div>
                         <div>
                           <p className="font-medium" style={{ color: 'var(--color-white)' }}>
-                            {student.first_name} {student.last_name}
+                            {student.last_name} {student.first_name}
                           </p>
                         </div>
                       </div>

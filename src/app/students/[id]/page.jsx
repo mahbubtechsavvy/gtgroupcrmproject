@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { isSuperAdmin } from '@/lib/permissions';
+import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 const TABS = ['Overview', 'Documents', 'Payments', 'Notes & History'];
 
@@ -24,6 +27,7 @@ export default function StudentProfile({ params }) {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [user, setUser] = useState(null);
+  const [photoUrl, setPhotoUrl] = useState(null);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -42,12 +46,14 @@ export default function StudentProfile({ params }) {
           users!assigned_to(id, full_name, email, role),
           destinations(id, country_name, flag_emoji),
           universities(id, name),
-          programs(id, name, degree_level)
+          programs(id, name, degree_level),
+          documents(*)
         `)
         .eq('id', params.id)
         .single();
 
       setStudent(data);
+      setPhotoUrl(data?.documents?.find(d => d.document_type === 'Student Photo')?.file_url || null);
       setLoading(false);
     };
     loadData();
@@ -71,15 +77,72 @@ export default function StudentProfile({ params }) {
     );
   }
 
-  const fullName = `${student.first_name} ${student.last_name}`;
+  const fullName = `${student.last_name} ${student.first_name}`;
   const initials = `${student.first_name?.charAt(0)}${student.last_name?.charAt(0)}`.toUpperCase();
+
+  const handleExportZip = async () => {
+    try {
+      const zip = new JSZip();
+      
+      // 1. Data Excel
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Student Data');
+      
+      sheet.mergeCells('A1', 'J1');
+      const titleCell = sheet.getCell('A1');
+      titleCell.value = 'GT Group Bangladesh Student Data';
+      titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2E59' } };
+      titleCell.alignment = { horizontal: 'center' };
+      
+      const headerRow = sheet.getRow(2);
+      headerRow.values = ['Given Name', 'Surname', 'Passport Number', 'Email', 'Phone', 'WhatsApp', 'Father Mobile', 'Mother Mobile', 'Status', 'Nationality'];
+      headerRow.font = { bold: true };
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6B325' } }; // Gold
+      
+      sheet.addRow([
+        student.first_name || '',
+        student.last_name || '',
+        student.passport_number || '',
+        student.email || '',
+        student.phone ? ` ${student.phone}` : '',
+        student.whatsapp ? ` ${student.whatsapp}` : '',
+        student.father_mobile ? ` ${student.father_mobile}` : '',
+        student.mother_mobile ? ` ${student.mother_mobile}` : '',
+        student.pipeline_status || '',
+        student.nationality || ''
+      ]);
+
+      sheet.columns.forEach(col => col.width = 20);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      zip.file(`${student.last_name}_${student.first_name}_Data.xlsx`, buffer);
+      
+      // 2. Documents
+      if (student.documents?.length > 0) {
+        const folder = zip.folder("Documents");
+        for (const doc of student.documents) {
+          try {
+            const res = await fetch(doc.file_url);
+            const blob = await res.blob();
+            folder.file(doc.file_name, blob);
+          } catch(e) { console.error("Could not fetch file for zip", e); }
+        }
+      }
+      
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `${student.last_name}_${student.first_name}_Profile.zip`);
+    } catch (e) {
+      alert("Error generating zip: " + e.message);
+    }
+  };
 
   return (
     <div>
       {/* Profile Header */}
       <div className="card mb-24" style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap' }}>
-        <div className="avatar avatar-lg" style={{ width: '72px', height: '72px', fontSize: '1.5rem', borderRadius: '50%', flexShrink: 0 }}>
-          {initials}
+        <div className="avatar avatar-lg" style={{ width: '72px', height: '72px', fontSize: '1.5rem', borderRadius: '50%', flexShrink: 0, overflow: 'hidden' }}>
+          {photoUrl ? <img src={photoUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
         </div>
         <div style={{ flex: 1 }}>
           <div className="flex-between" style={{ flexWrap: 'wrap', gap: '12px' }}>
@@ -89,6 +152,14 @@ export default function StudentProfile({ params }) {
             </div>
             <div className="flex gap-12">
               <StatusChanger student={student} onChanged={() => window.location.reload()} />
+              <button className="btn btn-secondary btn-sm" onClick={handleExportZip}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export Zip
+              </button>
             </div>
           </div>
           <div className="flex gap-12 mt-16" style={{ flexWrap: 'wrap' }}>
@@ -130,7 +201,7 @@ export default function StudentProfile({ params }) {
 
       {/* Tab Content */}
       {activeTab === 0 && <OverviewTab student={student} />}
-      {activeTab === 1 && <DocumentsTab studentId={student.id} user={user} />}
+      {activeTab === 1 && <DocumentsTab student={student} user={user} onPhotoUpdated={setPhotoUrl} />}
       {activeTab === 2 && <PaymentsTab studentId={student.id} user={user} />}
       {activeTab === 3 && <NotesTab studentId={student.id} user={user} />}
     </div>
@@ -201,6 +272,8 @@ function OverviewTab({ student }) {
         { label: 'Email', value: student.email },
         { label: 'Phone', value: student.phone },
         { label: 'WhatsApp', value: student.whatsapp },
+        { label: 'Father Mobile', value: student.father_mobile },
+        { label: 'Mother Mobile', value: student.mother_mobile },
         { label: 'Address', value: student.address },
       ]
     },
@@ -214,6 +287,7 @@ function OverviewTab({ student }) {
         { label: 'IELTS Overall', value: student.ielts_overall },
         { label: 'IELTS (L/R/W/S)', value: student.ielts_overall ? `${student.ielts_listening}/${student.ielts_reading}/${student.ielts_writing}/${student.ielts_speaking}` : null },
         { label: 'TOEFL Score', value: student.toefl_score },
+        { label: 'TOPIK Score', value: student.topik_score },
         { label: 'Other Test', value: student.other_test ? `${student.other_test}: ${student.other_test_score}` : null },
       ]
     },
@@ -247,17 +321,29 @@ function OverviewTab({ student }) {
   );
 }
 
-function DocumentsTab({ studentId, user }) {
+function DocumentsTab({ student, user, onPhotoUpdated }) {
+  const studentId = student.id;
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [docType, setDocType] = useState('Passport Copy');
+  const [docType, setDocType] = useState('Student Passport');
 
   const DOC_TYPES = [
-    'Passport Copy', 'Academic Transcripts', 'Degree Certificate',
-    'IELTS / TOEFL Certificate', 'Birth Certificate', 'Bank Statement',
-    'Recommendation Letter', 'University Offer Letter', 'Visa Application Form',
-    'Visa Approval / Rejection Letter', 'Other'
+    'Student Photo', 'Father Photo', 'Mother Photo', 
+    'Student Passport', 'Student Birth Certificate', 'Student NID', 
+    'Father NID', 'Father Passport', 'Mother NID', 'Mother Passport', 
+    'SSC Certificate', 'SSC Transcript', 'HSC Certificate', 'HSC Transcript', 
+    'Language Certificate IELTS', 'Language Certificate TOEFL', 'Language Certificate TOPIK', 
+    'Student Signature', 'Mother Signature', 'Father Signature', 
+    'Testimonial', 'Police Clearance certificate', 'TB Test', 
+    'No Objection Certificate (NOC) from Parents', 'Citizenship certificate', 
+    'Family Relationship Certificate', 'Trade License', 'TIN Certificate', 
+    'Income Tax Certificate', 'Acknowledgement Receipt (After income Tax Payment)', 
+    'Challan Copy (Income Tax Payment Receipt)', 'Medical Form', 'Cover Letter', 
+    'Visa Issuance Number', 'Visa Form', 'Admission Form', 'Invoice', 
+    'Offer letter', 'Dormitory Form', 'Bank Solvency Certificate', 'Bank Statement', 
+    'Tuition Fee Payment Receipt (Swift copy)', 'Air Ticket', 'Annual Income Certificate', 
+    'University License', 'Other'
   ];
 
   useEffect(() => { loadDocs(); }, [studentId]);
@@ -279,7 +365,14 @@ function DocumentsTab({ studentId, user }) {
     const supabase = getSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
 
-    const fileName = `${studentId}/${Date.now()}_${file.name}`;
+    const sanitizedDocType = docType.replace(/ /g, '_');
+    const surname = student.last_name || 'Unknown';
+    const givenName = student.first_name || 'Unknown';
+    const passport = student.passport_number || 'NoPassport';
+    const ext = file.name.split('.').pop();
+    const cleanFileName = `${sanitizedDocType}-${surname}_${givenName}_${passport}.${ext}`;
+    
+    const fileName = `${studentId}/${Date.now()}_${cleanFileName}`;
     const { data: uploadData, error } = await supabase.storage
       .from('student-documents')
       .upload(fileName, file);
@@ -292,7 +385,7 @@ function DocumentsTab({ studentId, user }) {
       student_id: studentId,
       document_type: docType,
       file_url: publicUrl,
-      file_name: file.name,
+      file_name: cleanFileName,
       file_size: file.size,
       uploaded_by: session?.user?.id,
     });
@@ -301,11 +394,25 @@ function DocumentsTab({ studentId, user }) {
       student_id: studentId,
       staff_id: session?.user?.id,
       type: 'document',
-      content: `Uploaded document: ${docType} (${file.name})`,
+      content: `Uploaded document: ${docType} (${cleanFileName})`,
     });
+    
+    if (docType === 'Student Photo' && onPhotoUpdated) {
+      onPhotoUpdated(publicUrl);
+    }
 
     setUploading(false);
     loadDocs();
+  };
+
+  const handleDownload = async (url, filename) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      saveAs(blob, filename);
+    } catch (e) {
+      alert("Download failed.");
+    }
   };
 
   return (
@@ -352,9 +459,14 @@ function DocumentsTab({ studentId, user }) {
               <span className={`badge ${doc.status === 'verified' ? 'badge-success' : doc.status === 'rejected' ? 'badge-danger' : 'badge-warning'}`}>
                 {doc.status}
               </span>
-              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm" onClick={e => e.stopPropagation()}>
-                View
-              </a>
+              <div className="flex gap-8">
+                <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm" onClick={e => e.stopPropagation()}>
+                  View
+                </a>
+                <button className="btn btn-ghost btn-sm" onClick={() => handleDownload(doc.file_url, doc.file_name)}>
+                  Download
+                </button>
+              </div>
             </div>
           ))}
         </div>

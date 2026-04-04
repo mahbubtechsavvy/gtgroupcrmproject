@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { isSuperAdmin } from '@/lib/permissions';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 const LEAD_SOURCES = ['Facebook', 'Instagram', 'Referral', 'Walk-in', 'Website', 'WhatsApp', 'LinkedIn', 'Other'];
 const EDUCATION_LEVELS = ['High School', 'Diploma', 'Bachelor\'s', 'Master\'s', 'PhD', 'Other'];
@@ -20,6 +22,10 @@ const PIPELINE_STAGES = [
   { key: 'enrolled', label: 'Enrolled' },
 ];
 
+const NATIONALITIES = {
+  "Afghan": "AF", "Albanian": "AL", "Algerian": "DZ", "American": "US", "Andorran": "AD", "Angolan": "AO", "Antiguans": "AG", "Argentinean": "AR", "Armenian": "AM", "Australian": "AU", "Austrian": "AT", "Azerbaijani": "AZ", "Bahamian": "BS", "Bahraini": "BH", "Bangladeshi": "BD", "Barbadian": "BB", "Barbudans": "AG", "Batswana": "BW", "Belarusian": "BY", "Belgian": "BE", "Belizean": "BZ", "Beninese": "BJ", "Bhutanese": "BT", "Bolivian": "BO", "Bosnian": "BA", "Brazilian": "BR", "British": "GB", "Bruneian": "BN", "Bulgarian": "BG", "Burkinabe": "BF", "Burmese": "MM", "Burundian": "BI", "Cambodian": "KH", "Cameroonian": "CM", "Canadian": "CA", "Cape Verdean": "CV", "Central African": "CF", "Chadian": "TD", "Chilean": "CL", "Chinese": "CN", "Colombian": "CO", "Comoran": "KM", "Congolese": "CG", "Costa Rican": "CR", "Croatian": "HR", "Cuban": "CU", "Cypriot": "CY", "Czech": "CZ", "Danish": "DK", "Djibouti": "DJ", "Dominican": "DO", "Dutch": "NL", "East Timorese": "TL", "Ecuadorean": "EC", "Egyptian": "EG", "Emirian": "AE", "Equatorial Guinean": "GQ", "Eritrean": "ER", "Estonian": "EE", "Ethiopian": "ET", "Fijian": "FJ", "Filipino": "PH", "Finnish": "FI", "French": "FR", "Gabonese": "GA", "Gambian": "GM", "Georgian": "GE", "German": "DE", "Ghanaian": "GH", "Greek": "GR", "Grenadian": "GD", "Guatemalan": "GT", "Guinea-Bissauan": "GW", "Guinean": "GN", "Guyanese": "GY", "Haitian": "HT", "Herzegovinian": "BA", "Honduran": "HN", "Hungarian": "HU", "I-Kiribati": "KI", "Icelander": "IS", "Indian": "IN", "Indonesian": "ID", "Iranian": "IR", "Iraqi": "IQ", "Irish": "IE", "Israeli": "IL", "Italian": "IT", "Ivorian": "CI", "Jamaican": "JM", "Japanese": "JP", "Jordanian": "JO", "Kazakhstani": "KZ", "Kenyan": "KE", "Kittian and Nevisian": "KN", "Kuwaiti": "KW", "Kyrgyz": "KG", "Laotian": "LA", "Latvian": "LV", "Lebanese": "LB", "Liberian": "LR", "Libyan": "LY", "Liechtensteiner": "LI", "Lithuanian": "LT", "Luxembourger": "LU", "Macedonian": "MK", "Malagasy": "MG", "Malawian": "MW", "Malaysian": "MY", "Maldivan": "MV", "Malian": "ML", "Maltese": "MT", "Marshallese": "MH", "Mauritanian": "MR", "Mauritian": "MU", "Mexican": "MX", "Micronesian": "FM", "Moldovan": "MD", "Monacan": "MC", "Mongolian": "MN", "Moroccan": "MA", "Mosotho": "LS", "Motswana": "BW", "Mozambican": "MZ", "Namibian": "NA", "Nauruan": "NR", "Nepalese": "NP", "Nepali": "NP", "New Zealander": "NZ", "Ni-Vanuatu": "VU", "Nicaraguan": "NI", "Nigerien": "NE", "North Korean": "KP", "Northern Irish": "GB", "Norwegian": "NO", "Omani": "OM", "Pakistani": "PK", "Palauan": "PW", "Panamanian": "PA", "Papua New Guinean": "PG", "Paraguayan": "PY", "Peruvian": "PE", "Polish": "PL", "Portuguese": "PT", "Qatari": "QA", "Romanian": "RO", "Russian": "RU", "Rwandan": "RW", "Saint Lucian": "LC", "Salvadoran": "SV", "Samoan": "WS", "San Marinese": "SM", "Sao Tomean": "ST", "Saudi": "SA", "Scottish": "GB", "Senegalese": "SN", "Serbian": "RS", "Seychellois": "SC", "Sierra Leonean": "SL", "Singaporean": "SG", "Slovakian": "SK", "Slovenian": "SI", "Solomon Islander": "SB", "Somali": "SO", "South African": "ZA", "South Korean": "KR", "Spanish": "ES", "Sri Lankan": "LK", "Sudanese": "SD", "Surinamer": "SR", "Swazi": "SZ", "Swedish": "SE", "Swiss": "CH", "Syrian": "SY", "Taiwanese": "TW", "Tajik": "TJ", "Tanzanian": "TZ", "Thai": "TH", "Togolese": "TG", "Tongan": "TO", "Trinidadian or Tobagonian": "TT", "Tunisian": "TN", "Turkish": "TR", "Tuvaluan": "TV", "Ugandan": "UG", "Ukrainian": "UA", "Uruguayan": "UY", "Uzbekistani": "UZ", "Venezuelan": "VE", "Vietnamese": "VN", "Welsh": "GB", "Yemenite": "YE", "Zambian": "ZM", "Zimbabwean": "ZW"
+};
+
 const SECTION_TABS = ['Personal', 'Contact', 'Academic', 'Study Preferences', 'CRM Details'];
 
 const F = ({ label, required, children }) => (
@@ -36,6 +42,7 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
   const [universities, setUniversities] = useState([]);
   const [counselors, setCounselors] = useState([]);
   const [offices, setOffices] = useState([]);
+  const [defaultCountry, setDefaultCountry] = useState('BD'); // Default flag
   const superAdmin = isSuperAdmin(user?.role);
 
   const [form, setForm] = useState({
@@ -51,6 +58,8 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
     email: student?.email || '',
     phone: student?.phone || '',
     whatsapp: student?.whatsapp || '',
+    father_mobile: student?.father_mobile || '',
+    mother_mobile: student?.mother_mobile || '',
     address: student?.address || '',
     // Academic
     education_level: student?.education_level || '',
@@ -63,6 +72,7 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
     ielts_writing: student?.ielts_writing || '',
     ielts_speaking: student?.ielts_speaking || '',
     toefl_score: student?.toefl_score || '',
+    topik_score: student?.topik_score || '',
     other_test: student?.other_test || '',
     other_test_score: student?.other_test_score || '',
     // Study Preferences
@@ -103,7 +113,20 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
     }
   }, [form.target_destination_id]);
 
-  const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  const update = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+
+    // Logic to auto-sync country code when typing Nationality
+    if (field === 'nationality' && value) {
+      // Find matching country code (e.g. "Bangladeshi" -> "BD")
+      const code = NATIONALITIES[value] || Object.keys(NATIONALITIES).find(n => n.toLowerCase() === value.toLowerCase());
+      if (code && typeof code === 'string') {
+        setDefaultCountry(code);
+      } else if (NATIONALITIES[code]) {
+        setDefaultCountry(NATIONALITIES[code]);
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -208,15 +231,28 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
             {/* PERSONAL */}
             {activeSection === 0 && (
               <div className="grid-2">
-                <F label="First Name" required><input className="form-input" required value={form.first_name} onChange={e => update('first_name', e.target.value)} /></F>
-                <F label="Last Name" required><input className="form-input" required value={form.last_name} onChange={e => update('last_name', e.target.value)} /></F>
-                <F label="Date of Birth">{inp('date_of_birth', 'date')}</F>
+                <F label="Given Name" required><input className="form-input" required value={form.first_name} onChange={e => update('first_name', e.target.value)} /></F>
+                <F label="Surname" required><input className="form-input" required value={form.last_name} onChange={e => update('last_name', e.target.value)} /></F>
+                <F label="Date of Birth (YYYY/MM/DD)">{inp('date_of_birth', 'text', 'YYYY/MM/DD')}</F>
                 <F label="Gender">
                   {sel('gender', [{ value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }, { value: 'Other', label: 'Other' }], 'Select gender')}
                 </F>
-                <F label="Nationality">{inp('nationality', 'text', 'e.g. Bangladeshi')}</F>
+                <F label="Nationality">
+                  <input
+                    className="form-input"
+                    list="nationalities-list"
+                    placeholder="e.g. Bangladeshi"
+                    value={form.nationality}
+                    onChange={e => update('nationality', e.target.value)}
+                  />
+                  <datalist id="nationalities-list">
+                    {Object.keys(NATIONALITIES).map(nat => (
+                      <option key={nat} value={nat} />
+                    ))}
+                  </datalist>
+                </F>
                 <F label="Passport Number">{inp('passport_number', 'text', 'e.g. AB1234567')}</F>
-                <F label="Passport Expiry">{inp('passport_expiry', 'date')}</F>
+                <F label="Passport Expiry (YYYY/MM/DD)">{inp('passport_expiry', 'text', 'YYYY/MM/DD')}</F>
               </div>
             )}
 
@@ -224,8 +260,46 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
             {activeSection === 1 && (
               <div className="grid-2">
                 <F label="Email">{inp('email', 'email', 'student@email.com')}</F>
-                <F label="Phone">{inp('phone', 'tel', '+880...')}</F>
-                <F label="WhatsApp">{inp('whatsapp', 'tel', '+880...')}</F>
+                <F label="Phone">
+                  <PhoneInput
+                    international
+                    defaultCountry={defaultCountry}
+                    className="form-input"
+                    placeholder="Enter phone number"
+                    value={form.phone}
+                    onChange={v => update('phone', v)}
+                  />
+                </F>
+                <F label="WhatsApp">
+                  <PhoneInput
+                    international
+                    defaultCountry={defaultCountry}
+                    className="form-input"
+                    placeholder="Enter WhatsApp"
+                    value={form.whatsapp}
+                    onChange={v => update('whatsapp', v)}
+                  />
+                </F>
+                <F label="Father's Mobile">
+                  <PhoneInput
+                    international
+                    defaultCountry={defaultCountry}
+                    className="form-input"
+                    placeholder="Enter mobile"
+                    value={form.father_mobile}
+                    onChange={v => update('father_mobile', v)}
+                  />
+                </F>
+                <F label="Mother's Mobile">
+                  <PhoneInput
+                    international
+                    defaultCountry={defaultCountry}
+                    className="form-input"
+                    placeholder="Enter mobile"
+                    value={form.mother_mobile}
+                    onChange={v => update('mother_mobile', v)}
+                  />
+                </F>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <F label="Current Address">
                     <textarea className="form-textarea" style={{ minHeight: '80px' }} value={form.address} onChange={e => update('address', e.target.value)} />
@@ -255,6 +329,7 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
                   <F label="Speaking">{inp('ielts_speaking', 'number', '7.0')}</F>
                 </div>
                 <F label="TOEFL Score">{inp('toefl_score', 'number', '100')}</F>
+                <F label="TOPIK Score">{inp('topik_score', 'text', 'e.g. Level 3')}</F>
                 <F label="Other Test (PTE/Duolingo)">{inp('other_test', 'text', 'e.g. PTE')}</F>
                 <F label="Other Test Score">{inp('other_test_score', 'text', 'e.g. 65')}</F>
               </div>

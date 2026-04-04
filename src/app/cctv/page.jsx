@@ -21,6 +21,7 @@ export default function CctvPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [streams, setStreams] = useState({}); // deviceId -> streamUrl
   const [errorStatus, setErrorStatus] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -95,19 +96,41 @@ export default function CctvPage() {
     }
   };
 
-  // Auto-start streams when devices change or office filter changes
+  // Auto-start streams with staggered delay to prevent network flooding
   useEffect(() => {
     const filtered = activeOfficeId === 'all' 
       ? devices 
       : devices.filter(d => d.office_id === activeOfficeId);
     
-    filtered.forEach(device => {
-      if (!streams[device.id]) {
-        startStream(device.id);
+    // Find cameras that need streams started
+    const toStart = filtered.filter(d => !streams[d.id]);
+    if (toStart.length === 0) return;
+
+    let cancelled = false;
+
+    const startStaggered = async () => {
+      for (let i = 0; i < toStart.length; i++) {
+        if (cancelled) break;
+        startStream(toStart[i].id);
+        // Wait 1 second between each camera to avoid flooding the network
+        if (i < toStart.length - 1) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
       }
-    });
+    };
+
+    startStaggered();
+
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [devices, activeOfficeId]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setStreams({}); // Clear streams to force restart
+    await fetchDevices();
+    setIsRefreshing(false);
+  };
 
   const isSuperAdmin = ['ceo', 'coo', 'it_manager'].includes(user?.role);
 
@@ -130,6 +153,12 @@ export default function CctvPage() {
     ? devices 
     : devices.filter(d => d.office_id === activeOfficeId);
 
+  // Group devices by office
+  const groupedDevices = offices.map(office => ({
+    ...office,
+    devices: filteredDevices.filter(d => d.office_id === office.id)
+  })).filter(o => o.devices.length > 0);
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -141,15 +170,26 @@ export default function CctvPage() {
           </div>
         </div>
         
-        {isSuperAdmin && (
+        <div className={styles.headerActions}>
           <button 
-            className={`${styles.adminBtn} ${showManager ? styles.active : ''}`}
-            onClick={() => setShowManager(!showManager)}
+            className={`${styles.refreshBtn} ${isRefreshing ? styles.refreshing : ''}`}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
           >
-            {showManager ? <Globe size={18} /> : <Settings size={18} />}
-            {showManager ? 'Back to Dashboard' : 'Manage Devices'}
+            <RefreshCcw size={18} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
-        )}
+          
+          {isSuperAdmin && (
+            <button 
+              className={`${styles.adminBtn} ${showManager ? styles.active : ''}`}
+              onClick={() => setShowManager(!showManager)}
+            >
+              {showManager ? <Globe size={18} /> : <Settings size={18} />}
+              {showManager ? 'Back to Dashboard' : 'Manage Devices'}
+            </button>
+          )}
+        </div>
       </header>
 
       {showManager && isSuperAdmin ? (
@@ -174,23 +214,31 @@ export default function CctvPage() {
             ))}
           </div>
 
-          {filteredDevices.length === 0 ? (
+          {groupedDevices.length === 0 ? (
             <div className={styles.emptyState}>
               <CameraOff size={64} className={styles.emptyIcon} />
               <h3>No Cameras Online</h3>
               <p>Select an office or add new cameras in the management panel.</p>
             </div>
           ) : (
-            <div className={styles.grid}>
-              {filteredDevices.map(device => (
-                <CameraPlayer 
-                  key={device.id}
-                  cameraName={device.name}
-                  streamUrl={streams[device.id]}
-                  onRetry={() => startStream(device.id)}
-                />
-              ))}
-            </div>
+            groupedDevices.map(officeGroup => (
+              <div key={officeGroup.id} className={styles.officeSection}>
+                <div className={styles.officeHeader}>
+                  <div className={styles.officeDot} />
+                  <h2>{officeGroup.name}</h2>
+                </div>
+                <div className={styles.grid}>
+                  {officeGroup.devices.map(device => (
+                    <CameraPlayer 
+                      key={device.id}
+                      cameraName={device.name}
+                      streamUrl={streams[device.id]}
+                      onRetry={() => startStream(device.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))
           )}
         </>
       )}
