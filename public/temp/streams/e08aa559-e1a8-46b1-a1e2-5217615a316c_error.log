@@ -797,3 +797,17 @@ frame= 1923 fps= 15 q=-1.0 size=N/A time=00:02:08.20 bitrate=N/A speed=1.01x ela
 [2026-04-02T11:34:23.003Z] frame= 3881 fps= 15 q=-1.0 size=N/A time=00:04:18.80 bitrate=N/A speed=1.01x elapsed=0:04:16.85    
 [2026-04-02T11:34:23.517Z] frame= 3888 fps= 15 q=-1.0 size=N/A time=00:04:19.25 bitrate=N/A speed=1.01x elapsed=0:04:17.36    
 [2026-04-02T11:34:24.030Z] frame= 3896 fps= 15 q=-1.0 size=N/A time=00:04:19.80 bitrate=N/A speed=1.01x elapsed=0:04:17.88    
+[2026-04-02T11:34:24.487Z] [hls @ 000001d2e7001840] Opening 'D:\GT CRM WEB PROJECT\gtgroupcrmproject\public\temp\streams\e08aa559-e1a8-46b1-a1e2-5217615a316c\index64.ts' for writing
+
+[2026-04-02T11:34:24.487Z] [hls @ 000001d2e7001840] Opening 'D:\GT CRM WEB PROJECT\gtgroupcrmproject\public\temp\streams\e08aa559-e1a8-46b1-a1e2-5217615a316c\index.m3u8.tmp' for writing
+
+[2026-04-02T11:34:24.528Z] [aac @ 000001d2e763b900] Queue input is backward in time
+
+[2026-04-02T11:34:24.543Z] frame= 3903 fps= 15 q=-1.0 size=N/A time=00:04:20.25 bitrate=N/A speed=1.01x elapsed=0:04:18.39    
+[2026-04-02T11:34:24.643Z] [aost#0:1/aac @ 000001d2e7094400] Non-monotonic DTS; previous: 23424536, current: 23421420; changing to 23424537. This may result in incorrect timestamps in the output file.
+
+[2026-04-02T11:34:25.059Z] frame= 3911 fps= 15 q=-1.0 size=N/A time=00:04:20.81 bitrate=N/A speed=1.01x elapsed=0:04:18.91    
+[2026-04-02T11:34:25.585Z] frame= 3919 fps= 15 q=-1.0 size=N/A time=00:04:21.36 bitrate=N/A speed=1.01x elapsed=0:04:19.43    
+[2026-04-02T11:34:26.098Z] frame= 3926 fps= 15 q=-1.0 size=N/A time=00:04:21.81 bitrate=N/A speed=1.01x elapsed=0:04:19.95    
+[2026-04-02T11:34:26.613Z] frame= 3935 fps= 15 q=-1.0 size=N/A time=00:04:22.41 bitrate=N/A speed=1.01x elapsed=0:04:20.46    
+[2026-04-02T11:34:27.126Z] frame= 3942 fps= 15 q=-1.0 size=N/A time=00:04:22.86 bitrate=N/A speed=1.01x elapsed=0:04:20.97    
