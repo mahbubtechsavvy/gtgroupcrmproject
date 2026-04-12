@@ -174,3 +174,1123 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Promo Ticket Aesthetic */
+/* Promo Ticket Aesthetic */
+.promoTicket {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.promoTicket:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.promoTicketContent {
+  flex: 1;
+  padding: 14px 16px;
+  position: relative;
+}
+
+.promoCodeText {
+  background: rgba(201, 162, 39, 0.15);
+  color: var(--color-gold);
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.copyBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.copyBtn:hover {
+  color: var(--color-gold);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.copyBtn.copied {
+  color: var(--color-success);
+}
+
+.copyLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  position: absolute;
+  left: 100%;
+  margin-left: 8px;
+  white-space: nowrap;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.promoDiscountBadge {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1rem;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.promoDiscountLabel {
+  font-size: 0.65rem;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.promoDesc {
+  font-size: 0.75rem;
+  color: #94A3B8;
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+.promoScope {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.promoScope.global {
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.promoScope.office {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.promoTicketStub {
+  width: 32px;
+  border-left: 1px dashed rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.punchHole {
+  width: 16px;
+  height: 16px;
+  background: #0d1117; /* Matches dashboard bg-card color roughly */
+  border-radius: 50%;
+  position: absolute;
+  left: -8px;
+}
+
+.punchHole.top { top: -8px; }
+.punchHole.bottom { bottom: -8px; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Official Notices Card */
+.noticesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.noticeItem {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  transition: all 0.2s ease;
+}
+
+.noticeItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(201, 162, 39, 0.4);
+  transform: translateX(4px);
+}
+
+.noticeHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.noticeTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-white);
+  flex: 1;
+}
+
+.noticeBadge {
+  display: inline-block;
+  background: rgba(201, 162, 39, 0.2);
+  color: var(--color-gold);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+}
+
+.noticeMessage {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  word-break: break-word;
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noticeTime {
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+  font-weight: 500;
+}
+
+/* ===== ENHANCED TASK MANAGEMENT ===== */
+
+.tasksContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.taskHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.periodTabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.periodTab {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.periodTab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+}
+
+.periodTab.active {
+  background: rgba(201, 162, 39, 0.2);
+  color: var(--color-gold);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+}
+
+.taskInputSection {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.taskInput {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--color-white);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.taskInput:focus {
+  outline: none;
+  border-color: rgba(201, 162, 39, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.1);
+}
+
+.taskInput::placeholder {
+  color: var(--color-text-dim);
+}
+
+.periodSelect,
+.prioritySelect {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--color-white);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.periodSelect:focus,
+.prioritySelect:focus {
+  outline: none;
+  border-color: rgba(201, 162, 39, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.periodSelect option,
+.prioritySelect option {
+  background: #162142;
+  color: var(--color-white);
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.taskList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.taskList::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.taskList::-webkit-scrollbar-thumb {
+  background: rgba(201, 162, 39, 0.3);
+  border-radius: 4px;
+}
+
+.taskList::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 162, 39, 0.5);
+}
+
+.taskItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.taskItem:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(201, 162, 39, 0.3);
+}
+
+.taskItem.taskDone {
+  opacity: 0.6;
+}
+
+.taskItem.taskDone .taskLabel {
+  text-decoration: line-through;
+}
+
+.taskCheckbox {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--color-gold);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.taskContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.taskMain {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.taskLabel {
+  font-size: 0.9rem;
+  color: var(--color-white);
+  flex: 1;
+}
+
+.priorityStar {
+  color: var(--color-gold);
+  font-size: 0.9rem;
+}
+
+.taskPeriodBadge {
+  display: inline-block;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  flex-shrink: 0;
+}
+
+.taskAssigner {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+.emptyTaskState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--color-text-dim);
+  text-align: center;
+}
+
+.emptyTaskText {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.emptyTaskSubtext {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* Office Tasks Section */
+.officeTasksSection {
+  padding-top: 20px;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 20px;
+}
+
+.officeTaskGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.officeTaskInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 1024px) {
+  .taskHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .periodTabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .officeTaskGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== ENHANCED TASK MANAGEMENT - MAIN TABS ===== */
+
+.mainTabs {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mainTab {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mainTab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+}
+
+.mainTab.active {
+  background: rgba(201, 162, 39, 0.2);
+  color: var(--color-gold);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.periodFilterBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.filterLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ===== EVENTS SECTION ===== */
+
+.eventInputSection {
+  padding: 16px;
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 10px;
+}
+
+.eventInputGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.eventInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.addEventBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #3B82F6, rgba(59, 130, 246, 0.8));
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.addEventBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+}
+
+.addEventBtn:active {
+  transform: translateY(0);
+}
+
+.eventsList {
+  min-height: 200px;
+}
+
+.eventsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.eventCard {
+  padding: 16px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.eventCard:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.15);
+}
+
+.eventCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.eventTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin: 0;
+  flex: 1;
+}
+
+.eventBadge {
+  display: inline-block;
+  background: rgba(59, 130, 246, 0.2);
+  color: #3B82F6;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.eventDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eventDetail {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* ===== OFFICE TASK HISTORY ===== */
+
+.officeTaskHistorySection {
+  padding-top: 20px;
+}
+
+.officeHistoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.officeHistoryGrid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.officeHistoryGrid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.officeHistoryGrid::-webkit-scrollbar-thumb {
+  background: rgba(201, 162, 39, 0.3);
+  border-radius: 4px;
+}
+
+.officeHistoryGrid::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 162, 39, 0.5);
+}
+
+.historyItem {
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.historyItem:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(201, 162, 39, 0.3);
+  transform: translateX(4px);
+}
+
+.historyItemHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.historyInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.historyStaffName {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-white);
+}
+
+.historyOfficeName {
+  font-size: 0.75rem;
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.historyPeriodBadge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.historyPeriodBadge.daily {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3B82F6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.historyPeriodBadge.weekly {
+  background: rgba(245, 158, 11, 0.2);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.historyPeriodBadge.monthly {
+  background: rgba(139, 92, 246, 0.2);
+  color: #8B5CF6;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.historyPeriodBadge.event {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.historyTaskContent {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  margin: 0 0 10px 0;
+}
+
+.historyMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+}
+
+.historyDate {
+  font-weight: 500;
+}
+
+.completedBadge {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1024px) {
+  .eventInputGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .eventsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .officeHistoryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .periodFilterBar {
+    flex-wrap: wrap;
+  }
+}
+
+/* Staff Members Selection */
+.staffSelectionSection {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(201, 162, 39, 0.05);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 10px;
+}
+
+.staffSelectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.selectionTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selectionSubtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 4px 0 0 0;
+}
+
+.clearBtn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.filterSearchGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.miniLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.searchInput {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--color-white);
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: rgba(201, 162, 39, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.1);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-dim);
+}
+
+.quickActionButtons {
+  display: flex;
+  gap: 6px;
+}
+
+.quickActionBtn {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--color-white);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.quickActionBtn:hover {
+  background: rgba(201, 162, 39, 0.2);
+  border-color: rgba(201, 162, 39, 0.4);
+  color: var(--color-gold);
+}
+
+.staffMembersWrapper {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.01);
+  overflow: hidden;
+}
+
+.staffMembersList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 350px;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.staffMembersList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.staffMembersList::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.staffMembersList::-webkit-scrollbar-thumb {
+  background: rgba(201, 162, 39, 0.3);
+  border-radius: 4px;
+}
+
+.staffMembersList::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 162, 39, 0.5);
+}
+
+.staffMemberItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.staffMemberItem:hover {
+  background: rgba(201, 162, 39, 0.1);
+  border-color: rgba(201, 162, 39, 0.3);
+  transform: translateX(4px);
+}
+
+.staffMemberItem.selected {
+  background: rgba(201, 162, 39, 0.15);
+  border-color: rgba(201, 162, 39, 0.5);
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.3);
+}
+
+.staffCheckbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-gold);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.staffMemberContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.staffName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-white);
+}
+
+.staffOffice {
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+}
+
+.selectedBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--color-gold);
+  color: #0d1117;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.emptyStaffState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: var(--color-text-dim);
+  text-align: center;
+}
+
+.emptyStaffText {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.emptyStaffSubtext {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.assignmentActions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.assignAllBtn {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3B82F6;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.assignAllBtn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-2px);
+}
+
+.assignAllBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.assignSelectedBtn {
+  background: linear-gradient(135deg, var(--color-gold), rgba(201, 162, 39, 0.8));
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  color: #0d1117;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.2);
+}
+
+.assignSelectedBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(201, 162, 39, 0.3);
+}
+
+.assignSelectedBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.assignSelectedBtn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1024px) {
+  .filterSearchGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .assignmentActions {
+    grid-template-columns: 1fr;
+  }
+
+  .staffSelectionHeader {
+    flex-direction: column;
+  }
+}

@@ -103,7 +103,9 @@ export function can(user, feature, action) {
 }
 
 export function isSuperAdmin(role) {
-  return ['ceo', 'coo', 'it_manager'].includes(role);
+  if (!role) return false;
+  const normalizedRole = role.toLowerCase();
+  return ['ceo', 'coo', 'it_manager'].includes(normalizedRole);
 }
 
 export function canViewAllOffices(role) {

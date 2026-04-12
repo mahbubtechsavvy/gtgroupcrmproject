@@ -103,6 +103,28 @@ const NAV_ITEMS = [
     superAdminOnly: true,
   },
   {
+    label: 'Social Media Hub',
+    href: '/social-media',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+        <polyline points="16 6 12 2 8 6" />
+        <line x1="12" y1="2" x2="12" y2="15" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
+    label: 'Tasks & Events',
+    href: '/tasks-events',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 11H7a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h10a4 4 0 0 0 4-4v-6a4 4 0 0 0-4-4h-2m0-4h4a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
     label: 'Settings',
     href: '/settings',
     icon: (
@@ -115,7 +137,7 @@ const NAV_ITEMS = [
   },
 ];
 
-export default function Sidebar({ user, collapsed, onToggle }) {
+export default function Sidebar({ user, collapsed, onToggle, appSettings }) {
   const pathname = usePathname();
   const userIsSuperAdmin = isSuperAdmin(user?.role);
 
@@ -127,12 +149,20 @@ export default function Sidebar({ user, collapsed, onToggle }) {
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
       {/* Logo */}
       <div className={styles.logo}>
-        <div className={styles.logoMark}>
-          <span>GT</span>
-        </div>
+        {appSettings?.logo_url ? (
+           <img 
+             src={`${appSettings.logo_url}?t=${Date.now()}`} 
+             alt="Logo" 
+             style={{ width: collapsed ? '36px' : '48px', height: collapsed ? '36px' : '48px', objectFit: 'contain' }} 
+           />
+        ) : (
+          <div className={styles.logoMark}>
+            <span>GT</span>
+          </div>
+        )}
         {!collapsed && (
           <div className={styles.logoText}>
-            <span className={styles.logoName}>GT Group</span>
+            <span className={styles.logoName}>{appSettings?.company_name ? appSettings.company_name.replace(' CRM', '') : 'GT Group'}</span>
             <span className={styles.logoCrm}>CRM</span>
           </div>
         )}

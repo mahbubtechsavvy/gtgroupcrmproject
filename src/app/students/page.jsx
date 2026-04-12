@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase';
 import { useUser } from '@/components/layout/AppLayout';
@@ -8,6 +8,7 @@ import { isSuperAdmin, can } from '@/lib/permissions';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import StudentForm from '@/components/students/StudentForm';
+import FlagIcon from '@/components/ui/FlagIcon';
 import styles from './students.module.css';
 
 const PIPELINE_STATUS_LABELS = {
@@ -51,19 +52,6 @@ export default function StudentsPage() {
   const canEdit = can(user, 'students', 'edit');
   const canDelete = can(user, 'students', 'delete');
 
-  useEffect(() => {
-    if (searchParams.get('action') === 'add') {
-      setShowForm(true);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (user) {
-      loadStudents();
-      if (superAdmin) loadOffices();
-    }
-  }, [user, page, filterStatus, filterOffice, filterSource]);
-
   const loadOffices = async () => {
     const supabase = getSupabaseClient();
     const { data } = await supabase.from('offices').select('id, name').order('name');
@@ -71,8 +59,8 @@ export default function StudentsPage() {
   };
 
   const loadStudents = useCallback(async () => {
-    const supabase = getSupabaseClient();
     setLoading(true);
+    const supabase = getSupabaseClient();
 
     let query = supabase
       .from('students')
@@ -80,7 +68,8 @@ export default function StudentsPage() {
         *,
         offices(id, name),
         users!assigned_to(id, full_name),
-        destinations(id, country_name, flag_emoji)
+        destinations(id, country_name, flag_emoji),
+        documents(id, file_url, document_type)
       `, { count: 'exact' });
 
     if (!superAdmin) {
@@ -106,13 +95,27 @@ export default function StudentsPage() {
     setLoading(false);
   }, [user, page, filterStatus, filterOffice, filterSource, search, superAdmin]);
 
+  useEffect(() => {
+    if (searchParams.get('action') === 'add') {
+      setShowForm(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (user && superAdmin) loadOffices();
+  }, [user, superAdmin]);
+
+  useEffect(() => {
+    if (user) loadStudents();
+  }, [user, loadStudents]);
+
   // Debounce search
   useEffect(() => {
     const t = setTimeout(() => {
       if (user) { setPage(1); loadStudents(); }
     }, 400);
     return () => clearTimeout(t);
-  }, [search]);
+  }, [search, loadStudents, user]);
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this student? This cannot be undone.')) return;
@@ -319,8 +322,16 @@ export default function StudentsPage() {
                   <tr key={student.id} className={styles.studentRow} onClick={() => router.push(`/students/${student.id}`)}>
                     <td>
                       <div className="flex gap-12" style={{ alignItems: 'center' }}>
-                        <div className="avatar avatar-sm" style={{ flexShrink: 0 }}>
-                          {student.last_name?.charAt(0)}{student.first_name?.charAt(0)}
+                        <div className="avatar avatar-sm" style={{ flexShrink: 0, overflow: 'hidden', background: 'var(--color-gold-muted)', color: 'var(--color-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                          {student.documents?.find(d => d.document_type === 'Student Photo') ? (
+                            <img 
+                              src={student.documents.find(d => d.document_type === 'Student Photo').file_url} 
+                              alt="Profile" 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
+                          ) : (
+                            <span>{student.first_name?.charAt(0)}{student.last_name?.charAt(0)}</span>
+                          )}
                         </div>
                         <div>
                           <p className="font-medium" style={{ color: 'var(--color-white)' }}>
@@ -338,7 +349,7 @@ export default function StudentsPage() {
                     {superAdmin && <td className="text-sm text-muted">{student.offices?.name || '—'}</td>}
                     <td className="text-sm">
                       {student.destinations ? (
-                        <span>{student.destinations.flag_emoji} {student.destinations.country_name}</span>
+                        <FlagIcon destination={student.destinations} size="md" showName={true} />
                       ) : '—'}
                     </td>
                     <td className="text-sm text-muted">{student.users?.full_name || '—'}</td>

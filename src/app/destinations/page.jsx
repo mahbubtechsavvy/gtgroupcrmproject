@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { isSuperAdmin } from '@/lib/permissions';
+import FlagIcon from '@/components/ui/FlagIcon';
 
 const DEFAULT_DESTINATIONS = [
   { country_name: 'South Korea', flag_emoji: '🇰🇷' },
@@ -142,7 +143,10 @@ export default function DestinationsPage() {
           {destinations.map(dest => (
             <div key={dest.id} className="card" style={{ opacity: dest.is_active ? 1 : 0.6 }}>
               <div className="flex-between mb-12">
-                <div style={{ fontSize: '2.5rem' }}>{dest.flag_emoji}</div>
+                {/* SVG flag with emoji fallback via FlagIcon */}
+                <div>
+                  <FlagIcon destination={dest} size="lg" />
+                </div>
                 <div className="flex gap-8" style={{ alignItems: 'center' }}>
                   <span className={`badge ${dest.is_active ? 'badge-success' : 'badge-muted'}`}>
                     {dest.is_active ? 'Active' : 'Inactive'}

@@ -1,0 +1,506 @@
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+}
+
+h1 {
+  color: white;
+  margin-bottom: 10px;
+  font-size: 2.5rem;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+}
+
+/* Alert */
+.alert {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slideIn 0.3s ease;
+}
+
+.alert.success {
+  background: #10b981;
+  color: white;
+  border-left: 4px solid #059669;
+}
+
+.alert.error {
+  background: #ef4444;
+  color: white;
+  border-left: 4px solid #dc2626;
+}
+
+.alert.warning {
+  background: #f59e0b;
+  color: white;
+  border-left: 4px solid #d97706;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Main Grid */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 25px;
+  margin-top: 30px;
+}
+
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Policy List */
+.policyList {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 15px;
+}
+
+.listHeader h2 {
+  margin: 0;
+  color: #333;
+}
+
+.createBtn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.createBtn:hover {
+  background: #5a67d8;
+  transform: translateY(-2px);
+}
+
+/* Create Form */
+.createForm {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 2px solid #667eea;
+}
+
+.createForm h3 {
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.templateButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+  .templateButtons {
+    grid-template-columns: 1fr;
+  }
+}
+
+.templateBtn {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.templateBtn:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.formActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.saveBtn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.saveBtn:hover {
+  background: #059669;
+}
+
+.cancelBtn {
+  background: #f3f4f6;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.cancelBtn:hover {
+  background: #e5e7eb;
+}
+
+/* Policy List */
+.policiesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 30px 20px;
+  font-style: italic;
+}
+
+.policyCard {
+  padding: 15px;
+  border: 2px solid #f0f0f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.policyCard:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.policyCard.selected {
+  border-color: #667eea;
+  background: #f0f4ff;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+}
+
+.policyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.policyHeader h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.type {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  color: #999;
+  text-transform: capitalize;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.description {
+  margin: 8px 0 0 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Policy Details */
+.policyDetails {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+}
+
+.emptyDetails {
+  text-align: center;
+  color: #999;
+  padding: 60px 20px;
+  font-size: 1.1rem;
+}
+
+.detailsHeader {
+  margin-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 20px;
+}
+
+.detailsHeader h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.detailsActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.statusBtn,
+.deleteBtn {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.statusBtn {
+  background: #3b82f6;
+  color: white;
+}
+
+.statusBtn:hover {
+  background: #2563eb;
+}
+
+.deleteBtn {
+  background: #ef4444;
+  color: white;
+}
+
+.deleteBtn:hover {
+  background: #dc2626;
+}
+
+/* Rules Section */
+.rulesSection {
+  margin-bottom: 30px;
+}
+
+.rulesSection h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.rulesInfo {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.rulesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+  .rulesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ruleCard {
+  background: #f9fafb;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.ruleCard h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  text-transform: capitalize;
+  font-size: 0.95rem;
+}
+
+.ruleControl {
+  margin-bottom: 12px;
+}
+
+.ruleControl label {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.ruleControl select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.updateBtn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.updateBtn:hover {
+  background: #5a67d8;
+  transform: translateY(-2px);
+}
+
+/* Meta Info */
+.metaInfo {
+  background: #f9fafb;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.metaInfo h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+}
+
+.metaInfo p {
+  margin: 8px 0;
+  color: #666;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.metaInfo strong {
+  color: #333;
+}
+
+/* Loading */
+.loading {
+  color: white;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 1.2rem;
+}
+
+/* Scrollbar styling */
+.policyList::-webkit-scrollbar,
+.policyDetails::-webkit-scrollbar {
+  width: 8px;
+}
+
+.policyList::-webkit-scrollbar-track,
+.policyDetails::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.policyList::-webkit-scrollbar-thumb,
+.policyDetails::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.policyList::-webkit-scrollbar-thumb:hover,
+.policyDetails::-webkit-scrollbar-thumb:hover {
+  background: #5a67d8;
+}

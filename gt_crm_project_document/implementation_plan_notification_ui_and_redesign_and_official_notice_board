@@ -1,0 +1,41 @@
+# Plan: Notification UI/UX Redesign & Official Notice Board
+
+This plan addresses the need for a more elegant notification system and a dedicated "Notice Board" on the dashboard for staff to see company-wide updates.
+
+## Proposed Changes
+
+### 1. Dashboard "Official Notices" Card
+Add a dedicated section for staff to see all recent broadcasts without opening the header dropdown.
+
+#### [MODIFY] [page.jsx](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/app/dashboard/page.jsx)
+- **Data Hook**: Ensure all staff fetch the latest 5 broadcast notifications on load (using a query similar to the admin's history fetch).
+- **New Component**: Implement the `Official Notices` card.
+    - Header with a Megaphone icon 📢.
+    - Scrollable list of recent broadcasts.
+    - View/Read more behavior for long messages.
+- **Layout**: Position the Notice Board in the side columns for staff, or in a prominent area of the grid.
+
+#### [MODIFY] [dashboard.module.css](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/app/dashboard/dashboard.module.css)
+- Add `.noticeCard` styles.
+- Professional border-left accent (Gold or Blue).
+- Clean typography for "Notice" items.
+
+### 2. Header Notification Redesign
+Modernize the dropdown to look premium and "easy to use".
+
+#### [MODIFY] [Header.jsx](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/components/layout/Header.jsx)
+- Group notifications by date (Today, Earlier).
+- Add "Broadcast" tags to megaphone alerts.
+- Improved empty state with an icon.
+
+#### [MODIFY] [Header.module.css](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/components/layout/Header.module.css)
+- Implement glassmorphism for the dropdown.
+- Add smooth hover transitions for notification items.
+- Focus on legible font sizes and high contrast for unread items.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Staff View**: Log in as a counselor. Verify the "Official Notices" card appears on the dashboard with recent broadcasts.
+2.  **Notification Dropdown**: Open the notification icon in the header. Verify the new premium UI and categorized alerts.
+3.  **Real-time Sync**: Send a broadcast as admin. Verify it appears instantly in the "Official Notices" card for staff.

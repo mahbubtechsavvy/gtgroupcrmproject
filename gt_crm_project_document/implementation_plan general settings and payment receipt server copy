@@ -1,0 +1,63 @@
+# Implementation Plan - Payment System & Professional Receipts
+
+I will implement a robust financial management system including strict permissions, audit trails, and professional PDF generation based on your new **"Server Copy"** design.
+
+## Proposed Changes
+
+---
+
+### 🎨 1. Professional PDF Receipt Generation
+Based on the design assets in `D:\GT CRM WEB PROJECT\gtgroupcrmproject\payment_receipt_server_copy_pdffileformat_design`, I will build a dedicated PDF generator.
+
+#### [NEW] [generateReceipt.js](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/lib/pdf/generateReceipt.js)
+- **Visual Design**:
+    - **Branding**: Includes the "GT Group" logo and the official "STAMP" in the bottom-right corner.
+    - **Background**: Implements the signature gold-accented background elements.
+    - **Dynamic Data**: Populates Student Name, Passport Number, Office Location, and Payment Details.
+    - **Security**: Includes a **QR Code** at the bottom for verification (linking to a verification page or student portal).
+
+---
+
+### 🛡️ 2. Financial Permissions & Auditing
+We will secure the payment pipeline so only authorized staff can modify financial data.
+
+#### [NEW] [011_payment_audit_system.sql](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/supabase/migrations/011_payment_audit_system.sql)
+- **Role Enforcement**:
+    - **Staff/Counselor**: Can only **Add** payments. They cannot edit them once saved and cannot see global revenue totals.
+    - **Office Manager**: Can edit payments within their specific office.
+    - **Super Admin**: Full global visibility and editing power.
+- **Audit Logging**: Every change to a payment (amount, status, category) will be logged in a `payment_history` table, recording the "Who, When, and What was changed".
+
+---
+
+### ⚙️ 3. General Settings & Role-Based UI
+I will fix the Branding and restrict the Settings menu for non-admins.
+
+#### [MODIFY] [General Settings](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/app/settings/general/page.jsx)
+- **Key-Value Sync**: Connect Logo, Company Name, Currency, and Timezone to the new database format.
+- **Instant Branding**: Ensure changes to the logo reflect across the Sidebar and PDF receipts immediately.
+
+#### [MODIFY] [Settings Navigation](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/app/settings/page.jsx)
+- **Privacy Mode**: For non-admin staff, hide all advanced settings tabs (Integrations, Offices, etc.) and only show **"My Account"**.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Verification QR Code**: For the QR code on the PDF, should it lead to:
+> 1. A public verification URL on your website?
+> 2. The student's specific profile page in the CRM?
+> 3. Or just contain a text-based "Verification Hash" for internal use?
+
+> [!CAUTION]
+> **Old Data Migration**: When applying the strict permissions, do you want me to automatically assign all "Existing Payments" to their respective Office Managers, or leave them as-is?
+
+## Verification Plan
+
+### Automated Verification
+- I will run a browser test as a **Counselor** role to confirm "Revenue" and "Edit" buttons are hidden.
+- I will trigger a **PDF Generation** and verify all assets (Logo, Stamp, Triangle Accent) appear in the correct positions.
+
+### Manual Verification
+- Super Admin confirms that the `payment_history` correctly logs an "edited" event when a Manager changes a status.

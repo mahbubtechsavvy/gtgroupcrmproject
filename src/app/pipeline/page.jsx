@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { isSuperAdmin } from '@/lib/permissions';
+import { sendEmailNotification } from '@/lib/notifications';
 
 const PIPELINE_STAGES = [
   { key: 'new_lead', label: 'New Lead', color: '#6B7280', bg: 'rgba(107,114,128,0.1)' },
@@ -56,7 +57,7 @@ export default function PipelinePage() {
     let q = supabase.from('students').select(`
       id, first_name, last_name, pipeline_status, priority, created_at,
       offices(id, name),
-      users!assigned_to(id, full_name),
+      users!assigned_to(id, full_name, email),
       destinations(id, country_name, flag_emoji)
     `);
 
@@ -91,6 +92,27 @@ export default function PipelinePage() {
       type: 'status_change',
       content: `Moved from ${student.pipeline_status.replace(/_/g, ' ')} to ${newStatus.replace(/_/g, ' ')}`,
     });
+
+    // Email Notification for Status Change
+    if (student.users?.email) {
+      const stageLabel = PIPELINE_STAGES.find(s => s.key === newStatus)?.label || newStatus;
+      await sendEmailNotification(
+        student.users.email,
+        `Pipeline Update: ${student.first_name} ${student.last_name}`,
+        `
+          <div style="font-family: sans-serif; padding: 20px;">
+            <h2>Pipeline Progress Alert</h2>
+            <p>Hello <strong>${student.users.full_name}</strong>,</p>
+            <p>One of your students has moved to a new stage in the application pipeline.</p>
+            <hr />
+            <p><strong>Student:</strong> ${student.first_name} ${student.last_name}</p>
+            <p><strong>New Status:</strong> <span style="color: #C9A227; font-weight: bold;">${stageLabel}</span></p>
+            <hr />
+            <p><a href="https://gtgroupcrmproject.vercel.app/students/${student.id}" style="background: #C9A227; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Profile</a></p>
+          </div>
+        `
+      );
+    }
   };
 
   const handleDragStart = (e, studentId) => {

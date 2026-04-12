@@ -7,6 +7,8 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, FunnelChart, Funnel, LabelList,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 const PIPELINE_STAGES = [
   { key: 'new_lead', label: 'New Leads', color: '#6B7280' },
@@ -149,6 +151,80 @@ export default function ReportsPage() {
     setLoading(false);
   };
 
+  const handleExportAllData = async () => {
+    const supabase = getSupabaseClient();
+    let query = supabase.from('students').select(`
+      *,
+      offices(id, name),
+      users!assigned_to(id, full_name),
+      destinations(id, country_name, flag_emoji)
+    `).order('created_at', { ascending: false });
+
+    if (!isSuperAdmin(user?.role)) {
+      query = query.eq('office_id', user.office_id);
+    }
+    
+    const { data: allStudents, error } = await query;
+    
+    if (error || !allStudents || allStudents.length === 0) {
+      alert("No data to export or error fetching.");
+      return;
+    }
+
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('All Data Export');
+
+      sheet.mergeCells('A1', 'O1');
+      const titleCell = sheet.getCell('A1');
+      titleCell.value = 'GT Group CRM Analytical Report';
+      titleCell.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D2E59' } };
+      titleCell.alignment = { horizontal: 'center' };
+
+      const headerRow = sheet.getRow(2);
+      headerRow.values = [
+        'Given Name', 'Surname', 'Email', 'Phone', 'WhatsApp', 'Father Mobile', 'Mother Mobile',
+        'Status', 'Priority', 'Source', 'Nationality', 'Passport Number', 'Office', 'Counselor', 'Target Destination'
+      ];
+      headerRow.font = { bold: true };
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6B325' } };
+
+      const statusMap = {
+        new_lead: 'New Lead', initial_consultation: 'Consultation', documents_collecting: 'Docs Collecting',
+        application_submitted: 'Applied', offer_received: 'Offer Received', visa_applied: 'Visa Applied',
+        visa_approved: 'Visa Approved', enrolled: 'Enrolled', rejected: 'Rejected', deferred: 'Deferred'
+      };
+
+      allStudents.forEach(s => {
+        sheet.addRow([
+          s.first_name || '',
+          s.last_name || '',
+          s.email || '',
+          s.phone ? ` ${s.phone}` : '',
+          s.whatsapp ? ` ${s.whatsapp}` : '',
+          s.father_mobile ? ` ${s.father_mobile}` : '',
+          s.mother_mobile ? ` ${s.mother_mobile}` : '',
+          statusMap[s.pipeline_status] || s.pipeline_status || '',
+          s.priority || '',
+          s.lead_source || '',
+          s.nationality || '',
+          s.passport_number || '',
+          s.offices?.name || '—',
+          s.users?.full_name || '—',
+          s.destinations?.country_name || '—'
+        ]);
+      });
+
+      sheet.columns.forEach(col => col.width = 18);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), `GT_Analytical_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+    } catch (e) {
+      alert("Error generating Excel file: " + e.message);
+    }
+  };
+
   const TABS = isSuperAdmin(user?.role)
     ? ['Conversion Funnel', 'Monthly Trend', 'Lead Sources', 'Counselors', 'Destinations', 'Office Comparison']
     : ['Conversion Funnel', 'Monthly Trend', 'Lead Sources', 'Counselors', 'Destinations'];
@@ -168,6 +244,16 @@ export default function ReportsPage() {
         <div>
           <h1 className="page-title">Reports & Analytics</h1>
           <p className="page-subtitle">Performance insights across your operations</p>
+        </div>
+        <div>
+          <button className="btn btn-secondary" onClick={handleExportAllData}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download All Data
+          </button>
         </div>
       </div>
 

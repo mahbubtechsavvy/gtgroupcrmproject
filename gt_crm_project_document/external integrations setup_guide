@@ -1,0 +1,57 @@
+# ⚙️ External Integrations Setup Guide
+
+This guide will walk you through setting up the automated systems for your CRM. Follow these steps to enable Google Calendar synchronization, automated emails, and WhatsApp messaging.
+
+---
+
+## 1. Google Calendar & Meet Setup
+The CRM uses a "Google Service Account" to create calendar events and Google Meet links automatically.
+
+### Step A: Create a Google Cloud Project
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a **New Project** (e.g., "GT Group CRM").
+3. Search for **"Google Calendar API"** in the search bar and click **Enable**.
+
+### Step B: Create a Service Account
+1. Go to **IAM & Admin > Service Accounts**.
+2. Click **+ Create Service Account**.
+3. Name it "CRM-Sync" and click **Create and Continue**.
+4. Skip the optional roles and click **Done**.
+
+### Step C: Generate the JSON Key
+1. Click on the newly created service account email.
+2. Go to the **Keys** tab.
+3. Click **Add Key > Create New Key**.
+4. Select **JSON** and click **Create**. A file will download to your computer.
+5. **Paste the contents of this JSON file** into the "Google Service Account JSON" box in the CRM.
+
+### Step D: Share your Calendar
+1. Copy the service account email (it looks like `crm-sync@project-id.iam.gserviceaccount.com`).
+2. Open your [Google Calendar](https://calendar.google.com/) (using your `social.gtbd@gmail.com` account).
+3. Go to **Settings > Settings for my calendars > [Your Email] > Share with specific people**.
+4. Click **Add people** and paste the Service Account email.
+5. Set permission to **"Make changes to events"**.
+
+---
+
+## 2. Messaging & Alerts (Email)
+We use [Resend](https://resend.com) for professional, high-deliverability emails.
+
+1. Create a free account at [Resend.com](https://resend.com).
+2. Go to **API Keys** and click **Create API Key**.
+3. Set the name to "CRM Production" and the permission to "Full Access".
+4. Copy the key (starts with `re_...`) and paste it into the **Resend API Key** box in the CRM.
+5. *(Optional/Recommended)* Go to **Domains** in Resend and add `gt-bd.com` (or your preferred domain) to remove the "via resend.com" label.
+
+---
+
+## 3. WhatsApp Business (Optional)
+By default, the CRM uses a free "Click-to-Send" method. For automated bots:
+
+1. Create a Meta App at [developers.facebook.com](https://developers.facebook.com).
+2. Add the **WhatsApp** product.
+3. Under **WhatsApp > Getting Started**, you will find your **Temporary Access Token** and **Phone Number ID**.
+4. Paste them in the format `PhoneID / Token` in the CRM.
+
+> [!IMPORTANT]
+> Always click **"Save Changes"** at the top right after pasting your credentials. If a key is invalid, the CRM will alert you when it tries to send a notification.

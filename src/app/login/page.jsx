@@ -1,9 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from '@/lib/auth';
+import { useLoginPageSettings } from '@/lib/useAppSettings';
 import styles from './login.module.css';
+
+// Office badge SVG flag data – must match /public/country_flags/
+const OFFICE_BADGES = [
+  { country: 'Bangladesh', flagSrc: '/country_flags/bangladesh_flag.svg' },
+  { country: 'South Korea', flagSrc: '/country_flags/south-korea_flag.svg' },
+  { country: 'Sri Lanka',   flagSrc: '/country_flags/sri-lanka_flag.svg'   },
+  { country: 'Vietnam',     flagSrc: '/country_flags/vietnam_flag.svg'      },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +21,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const loginSettings = useLoginPageSettings();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,12 +53,24 @@ export default function LoginPage() {
       <div className={styles.loginContainer}>
         {/* Brand */}
         <div className={styles.brandSection}>
-          <div className={styles.logoMark}>
-            <span>GT</span>
-          </div>
+          {loginSettings.logoUrl ? (
+            // Display actual logo if available — sourced from General Settings
+            <div className={styles.logoBrand}>
+              <img
+                src={`${loginSettings.logoUrl}?v=${loginSettings.logoVersion || '1'}`}
+                alt="Company Logo"
+                className={styles.logoImage}
+              />
+            </div>
+          ) : (
+            // Display GT mark if no logo yet
+            <div className={styles.logoMark}>
+              <span>GT</span>
+            </div>
+          )}
           <div>
-            <h1 className={styles.brandName}>GT Group</h1>
-            <p className={styles.brandTagline}>Study Abroad Consultancy</p>
+            <h1 className={styles.brandName}>{loginSettings.companyName}</h1>
+            <p className={styles.brandTagline}>{loginSettings.slogan}</p>
           </div>
         </div>
 
@@ -158,12 +180,19 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Office Badges */}
+        {/* Office Badges — SVG flags */}
         <div className={styles.officeBadges}>
-          <span className={styles.officeBadge}>🇧🇩 Bangladesh</span>
-          <span className={styles.officeBadge}>🇰🇷 South Korea</span>
-          <span className={styles.officeBadge}>🇱🇰 Sri Lanka</span>
-          <span className={styles.officeBadge}>🇻🇳 Vietnam</span>
+          {OFFICE_BADGES.map(({ country, flagSrc }) => (
+            <span key={country} className={styles.officeBadge}>
+              <img
+                src={flagSrc}
+                alt={`${country} flag`}
+                className={styles.officeBadgeFlag}
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+              {country}
+            </span>
+          ))}
         </div>
 
         <p className={styles.copyright}>© {new Date().getFullYear()} GT Group Study Abroad Consultancy</p>

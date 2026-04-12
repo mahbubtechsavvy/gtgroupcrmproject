@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { isSuperAdmin } from '@/lib/permissions';
+import { sendEmailNotification } from '@/lib/notifications';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
@@ -40,6 +41,7 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [destinations, setDestinations] = useState([]);
   const [universities, setUniversities] = useState([]);
+  const [programs, setPrograms] = useState([]);
   const [counselors, setCounselors] = useState([]);
   const [offices, setOffices] = useState([]);
   const [defaultCountry, setDefaultCountry] = useState('BD'); // Default flag
@@ -78,6 +80,7 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
     // Study Preferences
     target_destination_id: student?.target_destination_id || '',
     target_university_id: student?.target_university_id || '',
+    target_program_id: student?.target_program_id || '',
     target_course_name: student?.target_course_name || '',
     preferred_intake: student?.preferred_intake || '',
     // CRM
@@ -110,8 +113,20 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
         .then(({ data }) => setUniversities(data || []));
     } else {
       setUniversities([]);
+      setForm(prev => ({ ...prev, target_university_id: '', target_program_id: '' }));
     }
   }, [form.target_destination_id]);
+
+  useEffect(() => {
+    if (form.target_university_id) {
+      const supabase = getSupabaseClient();
+      supabase.from('programs').select('id, name').eq('university_id', form.target_university_id).order('name')
+        .then(({ data }) => setPrograms(data || []));
+    } else {
+      setPrograms([]);
+      setForm(prev => ({ ...prev, target_program_id: '' }));
+    }
+  }, [form.target_university_id]);
 
   const update = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -147,7 +162,6 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
     if (payload.ielts_speaking) payload.ielts_speaking = parseFloat(payload.ielts_speaking);
     if (payload.toefl_score) payload.toefl_score = parseInt(payload.toefl_score);
     if (payload.graduation_year) payload.graduation_year = parseInt(payload.graduation_year);
-
     let result;
     if (student?.id) {
       result = await supabase.from('students').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', student.id);
@@ -170,6 +184,30 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
         });
       }
       result = { error };
+    }
+
+    // Email Notification for Assignment
+    if (!result.error && payload.assigned_to && payload.assigned_to !== student?.assigned_to) {
+      const { data: counselor } = await supabase.from('users').select('email, full_name').eq('id', payload.assigned_to).single();
+      if (counselor?.email) {
+        await sendEmailNotification(
+          counselor.email,
+          `New Lead Assigned: ${payload.first_name} ${payload.last_name}`,
+          `
+            <div style="font-family: sans-serif; padding: 20px;">
+              <h2>New Lead Assignment</h2>
+              <p>Hello <strong>${counselor.full_name}</strong>,</p>
+              <p>A new student lead has been assigned to you in the GT Group CRM.</p>
+              <hr />
+              <p><strong>Student:</strong> ${payload.first_name} ${payload.last_name}</p>
+              <p><strong>Destination:</strong> ${payload.target_destination_id ? 'Filtered by ID' : 'N/A'}</p>
+              <p><strong>Priority:</strong> ${payload.priority}</p>
+              <hr />
+              <p><a href="https://gtgroupcrmproject.vercel.app/students/${student?.id || ''}" style="background: #C9A227; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Student Profile</a></p>
+            </div>
+          `
+        );
+      }
     }
 
     setSaving(false);
@@ -350,7 +388,13 @@ export default function StudentForm({ student, user, onClose, onSaved }) {
                     {universities.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                 </F>
-                <F label="Target Course / Program">{inp('target_course_name', 'text', 'e.g. Computer Science')}</F>
+                <F label="Target Program (from database)">
+                  <select className="form-select" value={form.target_program_id} onChange={e => update('target_program_id', e.target.value)} disabled={!form.target_university_id}>
+                    <option value="">Select program...</option>
+                    {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </F>
+                <F label="Or Custom Course Name">{inp('target_course_name', 'text', 'e.g. Computer Science')}</F>
                 <F label="Preferred Intake">
                   {sel('preferred_intake', INTAKE_OPTIONS.map(i => ({ value: i, label: i })), 'Select intake')}
                 </F>

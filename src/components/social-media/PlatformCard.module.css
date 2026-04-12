@@ -1,0 +1,214 @@
+.card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.02);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(201, 162, 39, 0.5);
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6), 0 0 20px rgba(201, 162, 39, 0.1);
+}
+
+.header {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.iconWrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s;
+}
+
+.card:hover .iconWrapper {
+  transform: rotate(5deg) scale(1.1);
+}
+
+.accountInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.platformName {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.accountName {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+
+.officeTag {
+  font-size: 10px;
+  background: rgba(201, 162, 39, 0.1);
+  color: var(--color-gold, #C9A227);
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-top: 6px;
+  display: inline-block;
+  font-weight: 700;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.content {
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lastPost {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.postTitle {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 1px;
+}
+
+.postDate {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.footer {
+  padding: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.launchBtn {
+  flex: 1;
+  min-width: 130px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+
+.launchBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.launchBtnPrimary {
+  background: var(--color-gold, #C9A227);
+  color: #000;
+  border: none;
+  box-shadow: 0 4px 15px rgba(201, 162, 39, 0.3);
+}
+
+.launchBtnPrimary:hover {
+  background: #B08D20;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(201, 162, 39, 0.4);
+}
+
+/* Platform Specifics */
+.facebook { background: #1877F2; color: #fff; }
+.instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: #fff; }
+.tiktok { background: #000; color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); }
+.youtube { background: #FF0000; color: #fff; }
+.linkedin { background: #0A66C2; color: #fff; }
+.twitter { background: #000; color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); }
+.whatsapp { background: #25D366; color: #fff; }
+.custom { background: #64748b; color: #fff; }
+
+.inactiveOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 15, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+.inactiveBadge {
+  background: #ef4444;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

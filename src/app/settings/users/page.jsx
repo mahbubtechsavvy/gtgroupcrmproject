@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { getSupabaseClient } from '@/lib/supabase';
 import { isSuperAdmin, getRoleLabel } from '@/lib/auth';
+import { initiateGmailOAuthForEmailAccount } from '@/lib/googleOAuth';
+import ImageCropperModal from '@/components/ui/ImageCropperModal';
 
 const ROLES = ['ceo', 'coo', 'it_manager', 'office_manager', 'senior_counselor', 'counselor', 'receptionist'];
 
@@ -13,10 +16,15 @@ export default function UsersPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editUser, setEditUser] = useState(null);
-  const [form, setForm] = useState({ full_name: '', email: '', role: 'counselor', office_id: '', phone: '', password: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', role: 'counselor', office_id: '', phone: '', password: '', crm_email: '' });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [cropModalSrc, setCropModalSrc] = useState(null);
   const [saving, setSaving] = useState(false);
   const [filterRole, setFilterRole] = useState('');
   const [filterOffice, setFilterOffice] = useState('');
+  const [emailAccounts, setEmailAccounts] = useState([]); // [{ id, email, email_type, is_primary, oauth_token }]
+  const [loadingEmails, setLoadingEmails] = useState(false);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -44,6 +52,109 @@ export default function UsersPage() {
     setLoading(false);
   };
 
+  const loadEmailAccounts = async (userId) => {
+    if (!userId) return;
+    setLoadingEmails(true);
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/emails`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok && data.accounts) {
+        // Map account_type to email_type for UI compatibility
+        const mappedAccounts = data.accounts.map(acc => ({
+          ...acc,
+          email_type: acc.account_type || acc.email_type
+        }));
+        setEmailAccounts(mappedAccounts);
+      }
+    } catch (error) {
+      console.error('Error loading emails:', error);
+    }
+    setLoadingEmails(false);
+  };
+
+  const handleAddCrmEmail = async () => {
+    if (!form.crm_email || !editUser) return;
+    try {
+      const response = await fetch(`/api/admin/users/${editUser.id}/emails`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.crm_email, emailType: 'crm' }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setForm({ ...form, crm_email: '' });
+        loadEmailAccounts(editUser.id);
+        alert('CRM Email added successfully');
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (error) {
+      alert('Error adding CRM email: ' + error.message);
+    }
+  };
+
+  const handleRemoveEmail = async (accountId) => {
+    if (!editUser || !confirm('Remove this email address?')) return;
+    try {
+      const response = await fetch(`/api/admin/users/${editUser.id}/emails/${accountId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        loadEmailAccounts(editUser.id);
+        alert('Email removed successfully');
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (error) {
+      alert('Error removing email: ' + error.message);
+    }
+  };
+
+  const handleSetPrimaryEmail = async (accountId) => {
+    if (!editUser) return;
+    try {
+      const response = await fetch(`/api/admin/users/${editUser.id}/emails/${accountId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPrimary: true }),
+      });
+      if (response.ok) {
+        loadEmailAccounts(editUser.id);
+        alert('Primary email updated');
+      } else {
+        const data = await response.json();
+        alert('Error: ' + data.error);
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  };
+
+  const handleConnectGmail = () => {
+    if (!editUser) return;
+    const authUrl = initiateGmailOAuthForEmailAccount(editUser.id);
+    window.location.href = authUrl;
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCropModalSrc(URL.createObjectURL(file));
+    e.target.value = null; // reset input
+  };
+
+  const handleCropComplete = (croppedBlob) => {
+    const file = new File([croppedBlob], `avatar-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(croppedBlob));
+    setCropModalSrc(null);
+  };
+
   const handleCreateUser = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -59,6 +170,17 @@ export default function UsersPage() {
     if (authError) { alert('Error creating user: ' + authError.message); setSaving(false); return; }
 
     if (authData.user) {
+      let avatar_url = null;
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop();
+        const fileName = `${authData.user.id}-${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, avatarFile);
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+          avatar_url = publicUrl;
+        }
+      }
+
       await supabase.from('users').insert({
         id: authData.user.id,
         full_name: form.full_name,
@@ -66,6 +188,7 @@ export default function UsersPage() {
         role: form.role,
         office_id: form.office_id || null,
         phone: form.phone || null,
+        avatar_url: avatar_url,
         is_active: true,
       });
     }
@@ -107,12 +230,24 @@ export default function UsersPage() {
       }
     }
 
+    let avatar_url = editUser.avatar_url;
+    if (avatarFile) {
+      const ext = avatarFile.name.split('.').pop();
+      const fileName = `${editUser.id}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, avatarFile);
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+        avatar_url = publicUrl;
+      }
+    }
+
     await supabase.from('users').update({
       full_name: form.full_name,
       email: emailChanged ? form.email : editUser.email,
       role: form.role,
       office_id: form.office_id || null,
       phone: form.phone || null,
+      avatar_url: avatar_url
     }).eq('id', editUser.id);
     
     setSaving(false);
@@ -129,8 +264,11 @@ export default function UsersPage() {
 
   const openEdit = (user) => {
     setEditUser(user);
-    setForm({ full_name: user.full_name, email: user.email, role: user.role, office_id: user.office_id || '', phone: user.phone || '', password: '' });
+    setForm({ full_name: user.full_name, email: user.email, role: user.role, office_id: user.office_id || '', phone: user.phone || '', password: '', crm_email: '' });
+    setAvatarFile(null);
+    setAvatarPreview(user.avatar_url || null);
     setShowForm(true);
+    loadEmailAccounts(user.id);
   };
 
   if (!isSuperAdmin(currentUser?.role)) {
@@ -147,12 +285,19 @@ export default function UsersPage() {
 
   return (
     <div>
+      <div className="mb-16">
+        <Link href="/settings" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to Settings
+        </Link>
+      </div>
+
       <div className="flex-between mb-24" style={{ flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 className="page-title">User Management</h1>
           <p className="page-subtitle">{users.length} users registered</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditUser(null); setForm({ full_name: '', email: '', role: 'counselor', office_id: '', phone: '', password: '' }); setShowForm(true); }}>
+        <button className="btn btn-primary" onClick={() => { setEditUser(null); setForm({ full_name: '', email: '', role: 'counselor', office_id: '', phone: '', password: '', crm_email: '' }); setAvatarFile(null); setAvatarPreview(null); setShowForm(true); setEmailAccounts([]); }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
@@ -187,8 +332,14 @@ export default function UsersPage() {
                 <tr key={u.id}>
                   <td>
                     <div className="flex gap-12" style={{ alignItems: 'center' }}>
-                      <div className="avatar avatar-sm">
-                        {u.full_name?.charAt(0)?.toUpperCase()}
+                      <div className="avatar avatar-sm flex-none overflow-hidden" style={{ borderRadius: '50%' }}>
+                        {u.avatar_url ? (
+                            <img src={u.avatar_url} alt={u.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                              {u.full_name?.charAt(0)?.toUpperCase()}
+                            </span>
+                        )}
                       </div>
                       <div>
                         <p className="font-medium text-sm" style={{ color: 'var(--color-white)' }}>{u.full_name}</p>
@@ -241,7 +392,7 @@ export default function UsersPage() {
           <div className="modal">
             <div className="modal-header">
               <h2 className="modal-title">{editUser ? 'Edit User' : 'Add User'}</h2>
-              <button className="modal-close" onClick={() => { setShowForm(false); setEditUser(null); }}>
+              <button className="modal-close" onClick={() => { setShowForm(false); setEditUser(null); setEmailAccounts([]); }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
@@ -250,6 +401,19 @@ export default function UsersPage() {
             <form onSubmit={editUser ? handleUpdateUser : handleCreateUser}>
               <div className="modal-body">
                 <div className="grid-2">
+                  <div className="form-group" style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
+                    <label className="form-label mb-8" style={{ alignSelf: 'flex-start' }}>Profile Photo</label>
+                    <label style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '50%', backgroundColor: 'var(--color-bg-dark)', border: '2px dashed var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden' }}>
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      )}
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+                    </label>
+                    <p className="text-xs text-muted mt-8">Click to select photo</p>
+                  </div>
+                  
                   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                     <label className="form-label">Full Name *</label>
                     <input className="form-input" required value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} />
@@ -287,10 +451,111 @@ export default function UsersPage() {
                     <label className="form-label">Phone</label>
                     <input className="form-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
                   </div>
+
+                  {/* Email Management Section - Only show when editing */}
+                  {editUser && (
+                    <div style={{ gridColumn: '1 / -1', marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--color-border)' }}>
+                      <h3 className="text-sm font-semibold mb-16" style={{ color: 'var(--color-white)' }}>📧 Email Accounts</h3>
+                      
+                      {/* Current Email Accounts */}
+                      {loadingEmails ? (
+                        <p className="text-sm text-muted">Loading...</p>
+                      ) : emailAccounts.length > 0 ? (
+                        <div style={{ marginBottom: '20px' }}>
+                          {emailAccounts.map(acc => (
+                            <div key={acc.id} style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'space-between',
+                              padding: '12px',
+                              backgroundColor: 'var(--color-bg-dark)',
+                              borderRadius: '6px',
+                              marginBottom: '8px',
+                              border: acc.is_primary ? '1px solid var(--color-gold)' : '1px solid var(--color-border)'
+                            }}>
+                              <div>
+                                <p className="text-sm font-medium" style={{ color: 'var(--color-white)' }}>{acc.email}</p>
+                                <p className="text-xs text-muted">
+                                  {acc.email_type === 'crm' ? '💼 CRM Email' : '📨 Gmail'} 
+                                  {acc.is_primary ? ' • Primary' : ''}
+                                </p>
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                {!acc.is_primary && (
+                                  <button 
+                                    type="button"
+                                    className="btn btn-ghost btn-sm"
+                                    style={{ fontSize: '12px' }}
+                                    onClick={() => handleSetPrimaryEmail(acc.id)}
+                                  >
+                                    Set Primary
+                                  </button>
+                                )}
+                                {acc.email_type !== 'crm' && (
+                                  <button 
+                                    type="button"
+                                    className="btn btn-danger btn-sm"
+                                    style={{ fontSize: '12px' }}
+                                    onClick={() => handleRemoveEmail(acc.id)}
+                                  >
+                                    Remove
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted mb-16">No email accounts added yet</p>
+                      )}
+
+                      {/* Add CRM Email */}
+                      {!emailAccounts.find(e => e.email_type === 'crm') && (
+                        <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: 'var(--color-bg-dark)', borderRadius: '6px', borderLeft: '3px solid var(--color-gold)' }}>
+                          <label className="form-label mb-8" style={{ fontSize: '12px' }}>Add CRM Email (System Email)</label>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <input 
+                              type="email"
+                              className="form-input"
+                              style={{ flex: 1 }}
+                              placeholder="e.g., john@gtgroup.com"
+                              value={form.crm_email}
+                              onChange={e => setForm({...form, crm_email: e.target.value})}
+                            />
+                            <button 
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={handleAddCrmEmail}
+                              disabled={!form.crm_email}
+                            >
+                              Add
+                            </button>
+                          </div>
+                          <p className="text-xs text-muted mt-6">System email for official notifications and documents</p>
+                        </div>
+                      )}
+
+                      {/* Connect Gmail */}
+                      {!emailAccounts.find(e => e.email_type === 'gmail') && (
+                        <div style={{ padding: '12px', backgroundColor: 'var(--color-bg-dark)', borderRadius: '6px', borderLeft: '3px solid #4285F4' }}>
+                          <label className="form-label mb-8" style={{ fontSize: '12px' }}>Add Gmail Account (Optional)</label>
+                          <button 
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={handleConnectGmail}
+                            style={{ width: '100%' }}
+                          >
+                            🔗 Connect Gmail
+                          </button>
+                          <p className="text-xs text-muted mt-6">Used for calendar invites and external communications</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => { setShowForm(false); setEditUser(null); }}>Cancel</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowForm(false); setEditUser(null); setEmailAccounts([]); }}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
                   {saving ? 'Saving...' : editUser ? 'Update User' : 'Create User'}
                 </button>
@@ -298,6 +563,15 @@ export default function UsersPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Cropper Modal */}
+      {cropModalSrc && (
+        <ImageCropperModal
+          imageSrc={cropModalSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setCropModalSrc(null)}
+        />
       )}
     </div>
   );

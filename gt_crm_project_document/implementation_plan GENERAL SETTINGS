@@ -1,0 +1,64 @@
+# Implementation Plan - GT Group CRM Modernization (Settings & Payments)
+
+This plan outlines the next phase of the CRM's evolution, focusing on **Branding Consistency, strict Financial Control, and a premium Settings experience.**
+
+## Proposed Changes
+
+---
+
+### 🏛️ 1. Global Branding & General Settings
+I will modernize the General Settings page and fix the Sidebar logo logic.
+
+#### [MODIFY] [General Settings](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/app/settings/general/page.jsx)
+- **Schema Fix**: Rewrite page to use the multi-row key-value schema.
+- **Functional Configuration**: Enable **Primary Currency** and **Timezone** pickers that actually save to the database.
+- **Premium UI**: Introduce a "Branding Preview" card so you can see how your logo looks across the app before saving.
+
+#### [MODIFY] [Sidebar](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/components/layout/Sidebar.jsx) & [AppLayout](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/components/layout/AppLayout.jsx)
+- Update global fetch logic to ensure your company logo and name update **instantly** after saving in settings.
+
+---
+
+### 🛡️ 2. Payment Control & Verified PDF
+We will transition from "Loose Permissions" to a "Verified Financial System".
+
+#### [NEW] [011_payment_audit_and_permissions.sql](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/supabase/migrations/011_payment_audit_and_permissions.sql)
+- **Role-Based Access**:
+    - **Couselor/Receptionist**: Can "Add" payments but cannot see global revenue or "Edit" existing ones.
+    - **Office Manager**: Can edit office payments.
+    - **Super Admin**: Full global visibility.
+- **Audit Logging**: Create a `payment_history` table to track every modification made to a payment record.
+
+#### [MODIFY] [Student Payments Detail](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/app/students/[id]/page.jsx)
+- **Revenue Protection**: Hide total revenue from staff members.
+- **PDF Download**: Add a button: **"Download Service Verified Copy"**.
+- This will generate a professional PDF with your **Global Logo**, Student details, and Verfied Stamp using `jspdf`.
+
+---
+
+### 🚫 3. Settings Access Control
+We will ensure your staff doesn't see administrative settings.
+
+#### [MODIFY] [Settings Overview](file:///d:/GT%20CRM%20WEB%20PROJECT/gtgroupcrmproject/src/app/settings/page.jsx)
+- Logic update: If the user is NOT a Super Admin, hide **General, Integrations, Permissions, and Offices**.
+- They will only see **"My Account"** (Profile, Password).
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **PDF Formatting**: Do you have a specific slogan or "Verified" stamp text you'd like to appear on the Payment Receipt PDF? (e.g., "GT Group Study Abroad — Verified Payment Record").
+
+> [!CAUTION]
+> **Currency Locking**: Once you set a "Primary CRM Currency" (e.g., USD), do you want the system to automatically convert other office payments to this currency for your revenue reports?
+
+## Verification Plan
+
+### Automated Verification
+1. I will use the browser tool to log in as a **Counselor** and verify that the "General Settings" and "Integrations" links are hidden.
+2. I will verify that a Counselor CANNOT see the "Edit" button on a payment.
+3. I will test the **PDF Generation** to ensure the logo and data are rendered correctly.
+
+### Manual Verification
+1. Ask the Super Admin to verify that they can see all "Edit" history for a specific payment.

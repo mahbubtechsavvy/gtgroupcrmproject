@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { getSupabaseClient } from '@/lib/supabase';
 import { isSuperAdmin } from '@/lib/permissions';
 
@@ -127,6 +128,12 @@ export default function PermissionsPage() {
 
   return (
     <div>
+      <div className="mb-16">
+        <Link href="/settings" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to Settings
+        </Link>
+      </div>
       <div className="flex-between mb-24" style={{ flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 className="page-title">Permission Control</h1>
