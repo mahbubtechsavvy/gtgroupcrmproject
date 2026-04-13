@@ -9,9 +9,28 @@ export default function AuthGuard({ children }) {
   const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [appSettings, setAppSettings] = useState(null);
 
   useEffect(() => {
+    // Prevent hydration error by loading cache after initial mount
+    const cachedConfig = localStorage.getItem('crm_app_settings');
+    if (cachedConfig) {
+      try {
+        setAppSettings(JSON.parse(cachedConfig));
+      } catch (e) {}
+    }
+    
     const supabase = getSupabaseClient();
+
+    const fetchSettings = async () => {
+      const { data: s } = await supabase.from('app_settings').select('*');
+      if (s) {
+        const sMap = {};
+        s.forEach(item => { sMap[item.key] = item.value; });
+        setAppSettings(sMap);
+        localStorage.setItem('crm_app_settings', JSON.stringify(sMap));
+      }
+    };
 
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -47,6 +66,8 @@ export default function AuthGuard({ children }) {
       setLoading(false);
     };
 
+
+    fetchSettings();
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -72,24 +93,38 @@ export default function AuthGuard({ children }) {
           alignItems: 'center',
           gap: '16px'
         }}>
-          <div style={{
-            width: '52px',
-            height: '52px',
-            background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-light))',
-            borderRadius: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.4rem',
-            fontWeight: '800',
-            color: 'var(--color-dark)',
-            boxShadow: '0 0 30px rgba(201, 162, 39, 0.4)',
-          }}>
-            GT
-          </div>
-          <div className="loading-spinner" style={{ width: '28px', height: '28px' }} />
+          {appSettings === null ? (
+            <div style={{ width: '52px', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="loading-spinner" style={{ width: '24px', height: '24px', opacity: 0.5 }} />
+            </div>
+          ) : appSettings.logo_url ? (
+            <img 
+              src={appSettings.logo_url} 
+              alt="Logo" 
+              style={{ width: '52px', height: '52px', objectFit: 'contain' }} 
+            />
+          ) : (
+            <div style={{
+              width: '52px',
+              height: '52px',
+              background: 'linear-gradient(135deg, var(--color-gold), var(--color-gold-light))',
+              borderRadius: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.4rem',
+              fontWeight: '800',
+              color: 'var(--color-dark)',
+              boxShadow: '0 0 30px rgba(201, 162, 39, 0.4)',
+            }}>
+              GT
+            </div>
+          )}
+          {appSettings !== null && (
+            <div className="loading-spinner" style={{ width: '28px', height: '28px' }} />
+          )}
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-            Loading GT Group CRM...
+            Loading {appSettings ? (appSettings.company_name || 'GT Group CRM') : '...'}
           </p>
         </div>
       </div>

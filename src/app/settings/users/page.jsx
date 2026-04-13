@@ -160,11 +160,22 @@ export default function UsersPage() {
     setSaving(true);
     const supabase = getSupabaseClient();
 
+    const officeObj = offices.find(o => o.id === form.office_id);
+    const officeName = officeObj ? officeObj.name : 'Global / Head Office';
+
     // Create auth user via admin API (needs service role - we'll use signup)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { emailRedirectTo: `${window.location.origin}/login` }
+      options: { 
+        emailRedirectTo: `${window.location.origin}/login`,
+        data: {
+          full_name: form.full_name,
+          role: getRoleLabel(form.role),
+          office: officeName,
+          temp_password: form.password
+        }
+      }
     });
 
     if (authError) { alert('Error creating user: ' + authError.message); setSaving(false); return; }
