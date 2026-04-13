@@ -113,7 +113,7 @@
   color: #1f2937;
 }
 
-form {
+.formContainer form {
   display: flex;
   flex-direction: column;
   gap: 16px;

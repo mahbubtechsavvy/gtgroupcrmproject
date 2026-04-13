@@ -160,55 +160,6 @@ export const getEmailRoutingPolicy = async (userId) => {
   }
 };
 
-/**
- * PHASE 5: Select email account using policy rules
- * @param {Object} context - Selection context
- * @returns {Promise<Object|null>}
- */
-const selectEmailAccountUsingPolicy = async (context) => {
-  try {
-    const { userId, emailType } = context;
-
-    // Get applicable policy
-    const policy = await getEmailRoutingPolicy(userId);
-    if (!policy?.rules) return null;
-
-    // Extract rules for this email type
-    const emailTypeKey = emailType.includes('meeting') ? 'meeting_alerts' : 
-                        emailType.includes('invite') ? 'event_invites' :
-                        emailType.includes('notification') ? 'notifications' :
-                        'reminders';
-    
-    const rules = policy.rules[emailTypeKey];
-    if (!rules) return null;
-
-    // Get user's email accounts
-    const { data: accounts } = await supabase
-      .from('user_email_accounts')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_verified', true)
-      .order('is_primary', { ascending: false });
-
-    if (!accounts?.length) return null;
-
-    // Filter by policy's required account type
-    let candidates = accounts.filter(a => a.account_type === rules.account_type);
-    if (!candidates.length) candidates = accounts;
-
-    // Sort by priority from policy
-    if (rules.priority === 'oauth_connected') {
-      candidates.sort((a, b) => b.oauth_connected - a.oauth_connected);
-    } else if (rules.priority === 'primary') {
-      candidates.sort((a, b) => b.is_primary - a.is_primary);
-    }
-
-    return candidates[0] || null;
-  } catch (error) {
-    console.error('Error selecting email with policy:', error);
-    return null;
-  }
-};
 
 
 /**
