@@ -40,7 +40,7 @@ export default function AppointmentsPage() {
       setUser(u);
 
       // Load students for dropdown
-      const { data: st } = await sq.order('first_name').limit(200);
+      const { data: st } = await supabase.from('students').select('*').order('first_name').limit(200);
       setStudents(st || []);
 
       const { data: off } = await supabase.from('offices').select('id, name');

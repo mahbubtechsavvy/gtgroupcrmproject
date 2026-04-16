@@ -1,121 +1,79 @@
-/**
- * Google Calendar Sync API
- * Syncs events to user's Google Calendar
- * 
- * POST /api/google-calendar-sync
- * 
- * Body: {
- *   title: string,
- *   date: string (YYYY-MM-DD),
- *   time: string (HH:MM),
- *   meetLink?: string,
- *   description?: string,
- *   attendees?: string[],
- *   duration?: number (minutes, default 30)
- * }
- */
+import { createClient } from '@supabase/supabase-js';
+import { refreshGoogleToken, createCalendarEvent } from '@/lib/googleCalendar';
 
-export async function POST(req) {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export async function POST(request) {
   try {
-    const { title, date, time, meetLink, description, attendees, duration = 30 } = await req.json();
+    const body = await request.json();
+    const { 
+      counselorId, 
+      studentId, 
+      studentEmail,
+      title, 
+      description, 
+      startTime, 
+      endTime, 
+      isOnline 
+    } = body;
 
-    // Validate input
-    if (!title || !date || !time) {
-      return Response.json(
-        { error: 'Missing required fields: title, date, time' },
-        { status: 400 }
-      );
+    if (!counselorId || !title || !startTime || !endTime) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
     }
 
-    console.log('📅 Google Calendar Sync Request:', {
+    // 1. Find the connected Google account for the counselor
+    const { data: accounts, error: accountError } = await supabase
+      .from('user_email_accounts')
+      .select('*')
+      .eq('user_id', counselorId)
+      .eq('oauth_provider', 'google')
+      .eq('oauth_connected', true);
+
+    if (accountError || !accounts || accounts.length === 0) {
+      return new Response(JSON.stringify({ 
+        error: 'Counselor does not have a connected Google account for calendar sync.' 
+      }), { status: 404 });
+    }
+
+    // Prefer the primary account, otherwise pick the first one
+    const primaryAccount = accounts.find(a => a.is_primary) || accounts[0];
+
+    // 2. Refresh token if needed
+    let accessToken = primaryAccount.oauth_token;
+    const isExpired = new Date(primaryAccount.oauth_expires_at) <= new Date();
+
+    if (isExpired) {
+      try {
+        accessToken = await refreshGoogleToken(counselorId, primaryAccount.id);
+      } catch (refreshErr) {
+        console.error('Token refresh failed:', refreshErr);
+        return new Response(JSON.stringify({ error: 'Failed to refresh Google authorization.' }), { status: 401 });
+      }
+    }
+
+    // 3. Create the Google Calendar event
+    // Note: This also handles the Student Invitation if studentEmail is provided
+    const calendarEvent = await createCalendarEvent({
+      accessToken,
       title,
-      date,
-      time,
-      meetLink,
-      attendees: attendees?.length || 0,
+      description,
+      startTime: new Date(startTime).toISOString(),
+      endTime: new Date(endTime).toISOString(),
+      studentEmail: studentEmail || null,
+      isOnline
     });
 
-    // TODO: Implement Google Calendar API integration
-    // This will require:
-    // 1. OAuth2 setup
-    // 2. User's Google calendar access token
-    // 3. Google Calendar API client initialization
-    // 4. Creating the event
+    return new Response(JSON.stringify({ 
+      success: true, 
+      eventId: calendarEvent.id, 
+      htmlLink: calendarEvent.htmlLink,
+      meetLink: calendarEvent.conferenceData?.entryPoints?.find(ep => ep.entryPointType === 'video')?.uri || null
+    }), { status: 200 });
 
-    // For now, return success response showing what would be synced
-    const startDateTime = new Date(`${date}T${time}:00`);
-    const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
-
-    const eventObject = {
-      summary: title,
-      description: description || `Meeting Link: ${meetLink || 'N/A'}`,
-      start: {
-        dateTime: startDateTime.toISOString(),
-        timeZone: 'UTC',
-      },
-      end: {
-        dateTime: endDateTime.toISOString(),
-        timeZone: 'UTC',
-      },
-      attendees: (attendees || []).map(email => ({
-        email,
-        responseStatus: 'needsAction',
-      })),
-      ...(meetLink && {
-        conferenceData: {
-          conferenceSolution: {
-            key: {
-              type: 'hangoutsMeet',
-            },
-          },
-          conferenceLinkUri: meetLink,
-        },
-      }),
-      reminders: {
-        useDefault: false,
-        overrides: [
-          { method: 'email', minutes: 24 * 60 }, // 24 hours
-          { method: 'popup', minutes: 15 }, // 15 minutes
-        ],
-      },
-    };
-
-    console.log('✅ Calendar event prepared (ready for Google API):', eventObject);
-
-    return Response.json({
-      success: true,
-      message: 'Event prepared for Google Calendar sync',
-      event: eventObject,
-      status: 'pending_implementation',
-      note: 'Google Calendar API integration pending OAuth setup',
-    });
   } catch (error) {
-    console.error('❌ Google Calendar Sync Error:', error);
-    return Response.json(
-      { error: error.message || 'Failed to sync with Google Calendar' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * GET /api/google-calendar-sync
- * Check if user has Google Calendar connected
- */
-export async function GET(req) {
-  try {
-    // TODO: Check if user has OAuth token for Google Calendar
-
-    return Response.json({
-      connected: false,
-      message: 'Google Calendar connection not yet configured',
-      authUrl: '/api/auth/google/calendar', // Will be configured later
-    });
-  } catch (error) {
-    console.error('❌ Error checking Google Calendar connection:', error);
-    return Response.json(
-      { error: error.message || 'Failed to check Google Calendar status' },
-      { status: 500 }
-    );
+    console.error('Google Calendar Sync Error:', error);
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }

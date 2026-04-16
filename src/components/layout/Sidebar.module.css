@@ -103,6 +103,16 @@
   overflow-x: hidden;
 }
 
+.navHeader {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 16px 12px 8px 12px;
+  margin-top: 8px;
+}
+
 .navItem {
   display: flex;
   align-items: center;

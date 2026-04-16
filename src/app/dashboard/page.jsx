@@ -12,6 +12,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import styles from './dashboard.module.css';
+import DailySchedule from '@/components/dashboard/DailySchedule';
 
 const PIPELINE_STAGES = [
   { key: 'new_lead', label: 'New Lead', color: '#6B7280' },
@@ -63,6 +64,7 @@ export default function DashboardPage() {
   const [newEventInput, setNewEventInput] = useState({ title: '', date: '', time: '', office: 'all', isOnline: false });
   const [generatedMeetLink, setGeneratedMeetLink] = useState(null);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [allStudents, setAllStudents] = useState([]);
 
   const superAdmin = isSuperAdmin(user?.role);
   
@@ -92,6 +94,7 @@ export default function DashboardPage() {
         const sourceCounts = {};
         students.forEach(s => { const src = s.lead_source || 'Other'; sourceCounts[src] = (sourceCounts[src] || 0) + 1; });
         setLeadSourceData(Object.entries(sourceCounts).map(([name, value]) => ({ name, value, color: LEAD_SOURCE_COLORS[name] || '#6B7280' })));
+        setAllStudents(students || []);
       }
 
       // 2. Revenue
@@ -374,6 +377,8 @@ export default function DashboardPage() {
       return;
     }
 
+    const selectedStudent = allStudents.find(s => s.id === newEventInput.studentId);
+
     // Validate meeting event if online
     if (newEventInput.isOnline) {
       const validation = validateMeetingEvent({
@@ -484,6 +489,42 @@ export default function DashboardPage() {
           console.warn('Email sending warning (event still created):', emailError);
           alert(`✅ Event created successfully!${newEventInput.isOnline ? '\n📞 Google Meet link generated and stored.' : ''}\n⚠️ Email sending failed but event was created`);
         }
+
+        // --- GOOGLE CALENDAR SYNC ---
+        if (newEventInput.isOnline || selectedStudent) {
+          try {
+            console.log('🔄 Syncing to Google Calendar...');
+            const startTime = `${newEventInput.date}T${newEventInput.time || '10:00'}:00`;
+            const end = new Date(new Date(startTime).getTime() + 60 * 60 * 1000); // 1 hour duration
+            
+            const syncRes = await fetch('/api/google-calendar-sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                counselorId: user.id,
+                studentId: selectedStudent?.id,
+                studentEmail: selectedStudent?.email,
+                title: newEventInput.title,
+                description: `Meeting with Counselor ${user.full_name} for office: ${newEventInput.office}`,
+                startTime: startTime,
+                endTime: end.toISOString(),
+                isOnline: newEventInput.isOnline
+              })
+            });
+            
+            const syncData = await syncRes.json();
+            if (syncRes.ok) {
+              console.log('✅ Google Calendar Link:', syncData.htmlLink);
+              alert(`📅 Calendar synced! Event added to your and ${selectedStudent?.first_name || 'student'}'s Google Calendar.`);
+            } else {
+              console.warn('⚠️ Sync failed:', syncData.error);
+            }
+          } catch (syncErr) {
+            console.error('Calendar Sync Error:', syncErr);
+          }
+        }
+        // ----------------------------
+
       }
     } catch (error) {
       console.error('❌ Error creating event:', error);
@@ -626,64 +667,14 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Task Input Section */}
-                <div className={styles.taskInputSection}>
-                  <input
-                    type="text"
-                    className={styles.taskInput}
-                    placeholder="Add a new task..."
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && e.currentTarget.value) {
-                        const periodSelect = e.currentTarget.nextElementSibling;
-                        const period = periodSelect ? periodSelect.value : 'daily';
-                        handleAddTask(e.currentTarget.value, 'normal', user.id, period);
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                  />
-                  <select className={styles.periodSelect} defaultValue="daily">
-                    <option value="daily">📅 Daily</option>
-                    <option value="weekly">🗓️ Weekly</option>
-                    <option value="monthly">📆 Monthly</option>
-                  </select>
-                </div>
-
-                {/* Task List */}
-                <div className={styles.taskList}>
-                  {filterTasksByPeriod(
-                    (superAdmin ? tasks : tasks.filter(t => t.staff_id === user.id && t.task_period !== 'event')),
-                    myTaskPeriod
-                  ).length > 0 ? (
-                    filterTasksByPeriod(
-                      (superAdmin ? tasks : tasks.filter(t => t.staff_id === user.id && t.task_period !== 'event')),
-                      myTaskPeriod
-                    ).map(t => (
-                      <div key={t.id} className={`${styles.taskItem} ${t.is_completed ? styles.taskDone : ''}`}>
-                        <input
-                          type="checkbox"
-                          checked={t.is_completed}
-                          onChange={() => handleToggleTask(t.id, t.is_completed)}
-                          className={styles.taskCheckbox}
-                        />
-                        <div className={styles.taskContent}>
-                          <div className={styles.taskMain}>
-                            <span className={styles.taskLabel}>
-                              {t.priority === 'high' && <span className={styles.priorityStar}>★</span>}
-                              {t.task_content}
-                            </span>
-                            {t.task_period && <span className={styles.taskPeriodBadge}>{t.task_period}</span>}
-                          </div>
-                          {t.created_by !== user.id && <span className={styles.taskAssigner}>by {t.users?.full_name}</span>}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className={styles.emptyTaskState}>
-                      <p className={styles.emptyTaskText}>No {myTaskPeriod === 'all' ? '' : myTaskPeriod} tasks</p>
-                      <p className={styles.emptyTaskSubtext}>All caught up! 🎉</p>
-                    </div>
-                  )}
-                </div>
+                {/* New Daily Schedule System */}
+                <DailySchedule 
+                  tasks={tasks.filter(t => t.staff_id === user.id && t.task_period !== 'event')} 
+                  onToggleTask={(id) => {
+                    const t = tasks.find(task => task.id === id);
+                    if (t) handleToggleTask(id, t.is_completed);
+                  }}
+                />
               </div>
             )}
 
@@ -738,6 +729,20 @@ export default function DashboardPage() {
                         </select>
                       </div>
                     )}
+                    <div className={styles.eventInputGroup}>
+                      <label className={styles.inputLabel}>🎓 Select Student (Optional)</label>
+                      <select
+                        className={styles.periodSelect}
+                        value={newEventInput.studentId || ''}
+                        onChange={e => setNewEventInput({...newEventInput, studentId: e.target.value})}
+                        disabled={isCreatingEvent}
+                      >
+                        <option value="">No Student Linked</option>
+                        {allStudents.map(s => (
+                          <option key={s.id} value={s.id}>{s.first_name} {s.last_name} ({s.email})</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   {/* Online Meeting Toggle */}

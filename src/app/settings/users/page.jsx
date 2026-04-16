@@ -23,6 +23,7 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [filterRole, setFilterRole] = useState('');
   const [filterOffice, setFilterOffice] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [emailAccounts, setEmailAccounts] = useState([]); // [{ id, email, email_type, is_primary, oauth_token }]
   const [loadingEmails, setLoadingEmails] = useState(false);
 
@@ -47,6 +48,12 @@ export default function UsersPage() {
     let q = supabase.from('users').select('*, offices!users_office_id_fkey(id, name)').order('full_name');
     if (filterRole) q = q.eq('role', filterRole);
     if (filterOffice) q = q.eq('office_id', filterOffice);
+    
+    // Apply search query across Name, Email, and Employee ID
+    if (searchQuery) {
+      q = q.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,employee_id.ilike.%${searchQuery}%`);
+    }
+
     const { data } = await q;
     setUsers(data || []);
     setLoading(false);
@@ -316,8 +323,17 @@ export default function UsersPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="search-filter-bar mb-20">
+      {/* Filters & Search */}
+      <div className="search-filter-bar mb-20" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="form-group mb-0" style={{ flex: '1', minWidth: '200px' }}>
+          <input 
+            className="form-input" 
+            placeholder="Search by Name, Email or Employee ID..." 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyUp={e => e.key === 'Enter' && loadUsers()}
+          />
+        </div>
         <select className="form-select" style={{ width: 'auto' }} value={filterRole} onChange={e => { setFilterRole(e.target.value); loadUsers(); }}>
           <option value="">All Roles</option>
           {ROLES.map(r => <option key={r} value={r}>{getRoleLabel(r)}</option>)}
@@ -326,6 +342,7 @@ export default function UsersPage() {
           <option value="">All Offices</option>
           {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
+        <button className="btn btn-secondary" onClick={loadUsers}>Search</button>
       </div>
 
       {loading ? (
@@ -335,12 +352,15 @@ export default function UsersPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>User</th><th>Role</th><th>Office</th><th>Phone</th><th>Status</th><th>Actions</th>
+                <th>Employee ID</th><th>User</th><th>Role</th><th>Office</th><th>Phone</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map(u => (
                 <tr key={u.id}>
+                  <td className="text-sm font-mono font-bold" style={{ color: 'var(--color-gold)' }}>
+                    {u.employee_id || 'Generating...'}
+                  </td>
                   <td>
                     <div className="flex gap-12" style={{ alignItems: 'center' }}>
                       <div className="avatar avatar-sm flex-none overflow-hidden" style={{ borderRadius: '50%' }}>
@@ -427,8 +447,14 @@ export default function UsersPage() {
                   
                   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                     <label className="form-label">Full Name *</label>
-                    <input className="form-input" required value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} />
+                    <input className="form-input" required value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} placeholder="e.g., Mahbubur Rahman" />
                   </div>
+                  {editUser && (
+                    <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="form-label">Employee ID (Auto-generated)</label>
+                      <input className="form-input" value={editUser.employee_id || 'Assigned on next login'} readOnly style={{ backgroundColor: 'var(--color-bg-dark)', color: 'var(--color-gold)', fontWeight: 'bold' }} />
+                    </div>
+                  )}
                   <div className="form-group">
                     <label className="form-label">Email *</label>
                     <input className="form-input" type="email" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} />

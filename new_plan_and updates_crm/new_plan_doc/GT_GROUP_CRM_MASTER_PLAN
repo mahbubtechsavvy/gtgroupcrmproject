@@ -1,0 +1,742 @@
+# 🏆 GT GROUP CRM — COMPLETE MASTER PLAN
+### Production-Ready Software for GT Group's Multi-Office Operations
+**Date:** April 16, 2026 | **Status:** 🟢 Active Development | **Version:** 4.0 — Unified Master Plan
+
+---
+
+## 📌 EXECUTIVE SUMMARY
+
+GT Group CRM is a **production-grade, full-stack web application** built for a multi-office international education consultancy operating across **South Korea 🇰🇷, Bangladesh 🇧🇩, Sri Lanka 🇱🇰, and Vietnam 🇻🇳**.
+
+This document is the **single source of truth** for everything built, everything in progress, and everything still to be built. From this one plan, you can understand exactly where the software stands and what needs to happen next.
+
+---
+
+## 🏗️ TECH STACK (Locked & Confirmed)
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14 (App Router) + React 18 |
+| Styling | Vanilla CSS + CSS Modules |
+| Database | Supabase (PostgreSQL) |
+| Authentication | Supabase Auth (JWT) |
+| File Storage | Supabase Storage |
+| Access Control | Row Level Security (RLS) |
+| Charts | Recharts |
+| Email (Internal) | Gmail API via Google OAuth |
+| Email (Events) | Smart Routing Engine (emailRouter.js) |
+| Icons | Lucide React |
+| PDF Generation | jsPDF + jsPDF-AutoTable |
+| Excel Export | ExcelJS |
+| Deployment | Vercel — `gtgroupcrmproject.vercel.app` |
+| Google Integrations | Google Meet, Google Calendar, Gmail API |
+
+### Brand Design System
+| Token | Value |
+|---|---|
+| `--color-gold` | `#C9A227` |
+| `--color-gold-light` | `#F0C040` |
+| `--color-dark` | `#1A1A2E` |
+| `--color-surface` | `#16213E` |
+| `--color-card` | `#0F3460` |
+| Theme | Dark navy + gold — premium feel |
+
+---
+
+## 👥 ROLES & PERMISSIONS (Confirmed)
+
+```
+SUPER ADMIN — Full system access (all offices, all data, all settings)
+├── CEO
+├── COO
+└── IT Manager
+
+OFFICE STAFF — Own office data only
+├── Office Manager (configurable delete/report permissions)
+├── Senior Counselor
+├── Counselor
+└── Receptionist
+```
+
+---
+
+## 📊 CURRENT BUILD STATUS (April 16, 2026)
+
+> [!IMPORTANT]
+> The following phases are **CODE COMPLETE** as of April 9, 2026. Migrations 016–023 are written. The immediate action is to ensure all migrations are applied to the Supabase production DB and deploy the latest build to Vercel.
+
+### ✅ PHASE 1 — Critical Bug Fixes (COMPLETE)
+- Staff search working (fixed Supabase relationship queries)
+- Event metadata display fixed (migration 015)
+- Office information visibility fixed
+- Error handling & logging added
+
+### ✅ PHASE 2 — Google Meet Integration (COMPLETE)
+- Auto-generate unique 42-char Meet links for online events
+- Event form toggle: "Is this an online meeting?"
+- Email templates with Meet link
+- Google Calendar API integration (`/api/google-calendar-sync`)
+
+### ✅ PHASE 3 — Email Account Management (COMPLETE)
+- `user_email_accounts` table (migration 016)
+- Google OAuth flow (`src/lib/googleOAuth.js`)
+- Add/remove/set-primary email accounts
+- Settings page UI with professional styling
+- 4 API routes: `/api/email-account/{add|remove|set-primary|verify}`
+
+### ✅ PHASE 4 — Email Routing & Auto-Sending (COMPLETE)
+- `email_logs` table (migration 017) with retry, 7 indexes, RLS
+- Smart email router (`src/lib/emailRouter.js`)
+  - Online meetings → Gmail
+  - Notifications → CRM email
+  - Invites → Gmail or CRM
+- Auto-send on event creation (`/api/send-event-emails`)
+- Email history dashboard (`/settings/email-history`)
+- Retry mechanism (`/api/email-retry`)
+
+### ✅ PHASE 5 — Admin Email Policies (COMPLETE)
+- `email_policies`, `email_policy_audit`, `policy_email_accounts` tables (migration 018)
+- Super Admin policy creation interface
+- Policy templates: Default, Gmail-First, Strict
+- Audit logging for all policy changes
+- `/settings/email-policies` admin page
+
+### ✅ ADDITIONAL SYSTEMS (COMPLETE — Migrations 019–023)
+- **019**: Fix email type column
+- **020**: Tasks & Events system (full rebuild)
+- **021**: Social Media Hub
+- **022**: Login page & country flag path settings
+- **023**: Make settings public for branding
+
+---
+
+## 🆕 NEW MODULES — FROM NOTEBOOK PLAN (April 16, 2026)
+
+> [!IMPORTANT]
+> These are the 6 new modules identified from the handwritten notebook plan dated **23/4/2026**. These are the **NEXT BUILD PRIORITIES** to complete the CRM for production use.
+
+---
+
+### 🆕 MODULE A — GT Group HR: Work Schedule Management
+**Inspired by:** Notebook Page 1, Item #1
+
+**Purpose:** Full HR work schedule management for all offices, verified by office managers.
+
+**Features:**
+- ✅ Define work schedule (weekly working days, weekends)
+- ✅ Configure public holidays per country/office (Bangladesh, South Korea, Sri Lanka, Vietnam)
+- ✅ Annual leave management per staff member
+- ✅ Total working days counter (daily, monthly view)
+- ✅ Overtime work tracking & plan
+- ✅ Staff Attendance & Leave log
+- ✅ Leave Plan (upcoming leave requests)
+- ✅ **Verification:** Office Managers must approve/verify timesheets
+- ✅ Import staff attendance data (CSV)
+
+**Database Tables:**
+```sql
+-- Work schedule configuration per office
+CREATE TABLE work_schedules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  office_id UUID REFERENCES offices(id),
+  working_days TEXT[] DEFAULT '{"Mon","Tue","Wed","Thu","Fri"}',
+  work_start_time TIME DEFAULT '09:00',
+  work_end_time TIME DEFAULT '18:00',
+  created_by UUID REFERENCES users(id),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Public holidays per office
+CREATE TABLE public_holidays (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  office_id UUID REFERENCES offices(id),
+  holiday_name TEXT NOT NULL,
+  holiday_date DATE NOT NULL,
+  year INTEGER NOT NULL,
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Staff attendance & leave
+CREATE TABLE staff_attendance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  staff_id UUID REFERENCES users(id),
+  office_id UUID REFERENCES offices(id),
+  date DATE NOT NULL,
+  status TEXT CHECK (status IN ('present','absent','late','half_day','on_leave','holiday')),
+  check_in TIME,
+  check_out TIME,
+  overtime_hours NUMERIC DEFAULT 0,
+  notes TEXT,
+  verified_by UUID REFERENCES users(id),
+  verified_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Leave requests
+CREATE TABLE leave_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  staff_id UUID REFERENCES users(id),
+  office_id UUID REFERENCES offices(id),
+  leave_type TEXT CHECK (leave_type IN ('annual','sick','emergency','unpaid','maternity','paternity')),
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  total_days INTEGER,
+  reason TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  reviewed_by UUID REFERENCES users(id),
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**Page Route:** `/hr/schedule`  
+**Access:** Super Admin (all offices), Office Manager (own office), Staff (view own record)
+
+---
+
+### 🆕 MODULE B — GT Group Contact Network
+**Inspired by:** Notebook Page 1, Item #2
+
+**Purpose:** A professional contact directory for all GT Group staff, partners, and key contacts — with company information, photos, and social media links.
+
+**Features:**
+- ✅ Contact card with: Name, Employee ID, Phone, Date of Birth
+- ✅ Email, Office/Company Name, Role, Country
+- ✅ NID or Passport number (stored securely)
+- ✅ Company Logo attachment (per person)
+- ✅ Profile Photo upload
+- ✅ Social media links (LinkedIn, Facebook, WhatsApp)
+- ✅ Search & filter by office, role, country
+- ✅ Export contact list as PDF or Excel
+
+**Database Table:**
+```sql
+CREATE TABLE contact_network (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name TEXT NOT NULL,
+  employee_id TEXT,
+  phone TEXT,
+  date_of_birth DATE,
+  email TEXT,
+  office_name TEXT,
+  company_name TEXT,
+  role TEXT,
+  country TEXT,
+  nid_or_passport TEXT,
+  company_logo_url TEXT,
+  photo_url TEXT,
+  linkedin_url TEXT,
+  facebook_url TEXT,
+  whatsapp TEXT,
+  notes TEXT,
+  office_id UUID REFERENCES offices(id),
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**Page Route:** `/contacts`  
+**Access:** All authenticated staff (view); Office Manager+ can add/edit; Super Admin can delete
+
+---
+
+### 🆕 MODULE C — GT Group Inventory Management
+**Inspired by:** Notebook Page 1, Item #3
+
+**Purpose:** Track all office equipment and supplies with purchase records and responsibility assignment.
+
+> [!NOTE]
+> Access restricted to **Office Managers and above only** as specified in the notebook.
+
+**Features:**
+- ✅ Item Name, Specification/Description
+- ✅ Inventory count (quantity tracking)
+- ✅ Purchase Date
+- ✅ Item Location (which room/desk)
+- ✅ Person in Charge (responsible staff)
+- ✅ Item status: Active / In Repair / Disposed
+- ✅ Low stock alerts for consumables
+- ✅ Export inventory report as PDF/Excel
+
+**Database Table:**
+```sql
+CREATE TABLE inventory_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  office_id UUID REFERENCES offices(id),
+  item_name TEXT NOT NULL,
+  specification TEXT,
+  quantity INTEGER DEFAULT 1,
+  purchase_date DATE,
+  purchase_price NUMERIC,
+  currency TEXT DEFAULT 'USD',
+  item_location TEXT,
+  person_in_charge UUID REFERENCES users(id),
+  status TEXT DEFAULT 'active' CHECK (status IN ('active','in_repair','disposed','lost')),
+  notes TEXT,
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**Page Route:** `/inventory`  
+**Access:** Office Manager, Super Admin ONLY
+
+---
+
+### 🆕 MODULE D — Daily Schedule in Tasks & Events
+**Inspired by:** Notebook Page 1, Item #4
+
+**Purpose:** Enhance the existing Tasks & Events page with a structured "Daily Schedule" view.
+
+**Features (additions to existing tasks-events page):**
+- ✅ **Important Work / Important Duty** section (pinned tasks)
+- ✅ **Tasks for Today** — tasks due today, color-coded by priority
+- ✅ **Tasks for Tomorrow** — forward planning section
+- ✅ Daily view in calendar format (time-blocked schedule)
+- ✅ Quick-add from daily view
+
+**Page Route:** `/tasks-events` (enhance existing page)  
+**Access:** All staff (own tasks); Managers see team tasks
+
+---
+
+### 🆕 MODULE E — Office Visitor Log
+**Inspired by:** Notebook Page 1, Item #5
+
+**Purpose:** A dedicated page to log all office visitors and their purpose of visit.
+
+**Features:**
+- ✅ Visitor Name, Contact
+- ✅ Purpose of Visit (dropdown: Meeting, Inquiry, Delivery, Interview, Other)
+- ✅ Host (which staff member they are visiting)
+- ✅ Check-in / Check-out time
+- ✅ Date
+- ✅ Notes
+- ✅ Office (for multi-office tracking)
+- ✅ Export visitor log as PDF/Excel
+
+**Database Table:**
+```sql
+CREATE TABLE visitor_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  office_id UUID REFERENCES offices(id),
+  visitor_name TEXT NOT NULL,
+  visitor_contact TEXT,
+  purpose TEXT NOT NULL,
+  host_staff_id UUID REFERENCES users(id),
+  check_in TIMESTAMPTZ DEFAULT now(),
+  check_out TIMESTAMPTZ,
+  notes TEXT,
+  recorded_by UUID REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**Page Route:** `/visitors`  
+**Access:** All staff (add/view own office); only Super Admin sees all offices
+
+---
+
+### 🆕 MODULE F — Expense Report for Purchased Items
+**Inspired by:** Notebook Page 2, Item #1
+
+**Purpose:** Structured monthly expense reporting system with mandatory manager and admin verification.
+
+**Business Rules (from notebook):**
+- 🔴 **Manager**: Must write the name of the person who actually handles the money
+- 🔴 **Submit**: Submit ONCE A MONTH — on the 30th (last day of each month) to Super Admin
+- 🔴 **Uses**: Must clearly specify the purpose of the money used
+- 🔴 **General Affairs**: All employees must receive approval from the administrative officer
+
+**Features:**
+- ✅ Date, Details, Specification
+- ✅ Income Amount, Expense Amount, Remaining Amount
+- ✅ Fund User (who physically handled the money)
+- ✅ Status: Draft → Submitted → Approved/Rejected
+- ✅ Monthly submission lock (submit once, on the 30th)
+- ✅ Super Admin approval workflow
+- ✅ PDF export of monthly expense report
+
+**Database Table:**
+```sql
+CREATE TABLE expense_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  office_id UUID REFERENCES offices(id),
+  report_month DATE NOT NULL, -- first day of that month
+  status TEXT DEFAULT 'draft' CHECK (status IN ('draft','submitted','approved','rejected')),
+  submitted_at TIMESTAMPTZ,
+  submitted_by UUID REFERENCES users(id),
+  approved_by UUID REFERENCES users(id),
+  approved_at TIMESTAMPTZ,
+  rejection_reason TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE expense_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_id UUID REFERENCES expense_reports(id) ON DELETE CASCADE,
+  item_date DATE NOT NULL,
+  details TEXT NOT NULL,
+  specification TEXT,
+  income_amount NUMERIC DEFAULT 0,
+  expense_amount NUMERIC DEFAULT 0,
+  remaining_amount NUMERIC GENERATED ALWAYS AS (income_amount - expense_amount) STORED,
+  fund_user UUID REFERENCES users(id),
+  purpose TEXT NOT NULL,
+  currency TEXT DEFAULT 'USD',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**Page Route:** `/expenses`  
+**Access:** Staff (own office, draft & submit); Super Admin (review & approve all)
+
+---
+
+### 🆕 MODULE G — Expenditure Plan
+**Inspired by:** Notebook Page 2, Item #2
+
+**Purpose:** Forward-looking budget/expenditure planning by office and role.
+
+**Features:**
+- ✅ Office Name, Position/Role, Staff Name
+- ✅ Date (period planned for)
+- ✅ Uses (what the budget is for)
+- ✅ Purpose of Funds (detailed justification)
+- ✅ Estimated Amount
+- ✅ Status: Planned → Requested → Approved
+- ✅ Super Admin can approve/reject plans
+
+**Database Table:**
+```sql
+CREATE TABLE expenditure_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  office_id UUID REFERENCES offices(id),
+  staff_id UUID REFERENCES users(id),
+  position_role TEXT,
+  plan_date DATE NOT NULL,
+  uses TEXT NOT NULL,
+  purpose_of_funds TEXT NOT NULL,
+  estimated_amount NUMERIC NOT NULL,
+  currency TEXT DEFAULT 'USD',
+  status TEXT DEFAULT 'planned' CHECK (status IN ('planned','requested','approved','rejected')),
+  approved_by UUID REFERENCES users(id),
+  approved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+**Page Route:** `/expenses/plans`  
+**Access:** Office Manager+ (create); Super Admin (approve all)
+
+---
+
+## 📋 PREVIOUSLY PLANNED (Still To Build) — FROM ORIGINAL IMPLEMENTATION PLAN
+
+These modules were in the original plan but still need to be connected/completed:
+
+### 🔄 MODULE H — Application Pipeline (Kanban Board)
+- Drag-and-drop Kanban with stages: New Lead → Initial Consultation → Documents Collecting → Application Submitted → Offer Received → Visa Applied → Visa Approved → Enrolled
+- **Route:** `/pipeline`
+- **Status:** Route exists, needs full Kanban implementation
+
+### 🔄 MODULE I — Students / Leads Management
+- Full student profile, documents, payments, notes tabs
+- **Route:** `/students` and `/students/[id]`
+- **Status:** Route exists, needs verification of full feature completeness
+
+### 🔄 MODULE J — Reports & Analytics
+- Cross-office funnel, revenue by office/counselor/destination
+- **Route:** `/reports`
+- **Status:** Route exists, needs full chart implementation
+
+### 🔄 MODULE K — Notification UI Redesign & Official Notice Board
+- Dashboard "Official Notices" card (megaphone icon)
+- Glassmorphism header notification dropdown
+- **Status:** Planned (see implementation_plan_notification_ui_and_redesign_and_official_notice_board)
+
+### 🔄 MODULE L — General Settings & Branding
+- Multi-row key-value settings schema
+- Primary Currency & Timezone pickers
+- Branding Preview card
+- Fast logo/name refresh across app
+- **Status:** Planned (see implementation_plan GENERAL SETTINGS)
+
+### 🔄 MODULE M — Payment Receipt PDF (Verified Copy)
+- Professional verified payment receipt PDF
+- GT Group logo + verified stamp
+- Role-based payment visibility
+- **Status:** Planned (see implementation_plan general settings and payment receipt)
+
+---
+
+## 🗺️ UPDATED SIDEBAR NAVIGATION (Final Structure)
+
+```
+GT GROUP CRM
+│
+├── 🏠 Dashboard
+├── 👥 Students / Leads
+├── 📋 Pipeline (Kanban)
+├── 📅 Appointments
+│
+├── ── HR & STAFF ──
+├── 🗓️ HR Work Schedule        [NEW MODULE A]
+├── 📇 Contact Network          [NEW MODULE B]
+├── 📦 Inventory Management     [NEW MODULE C]
+├── 👤 Visitor Log              [NEW MODULE E]
+│
+├── ── TASKS & SCHEDULING ──
+├── ✅ Tasks & Events (Daily)   [Enhanced MODULE D]
+│
+├── ── FINANCE ──
+├── 💰 Expense Reports          [NEW MODULE F]
+├── 📊 Expenditure Plans        [NEW MODULE G]
+├── 📈 Reports & Analytics
+│
+├── ── MASTER DATA ──
+├── 🗺️ Destinations
+├── 🏫 Universities & Programs
+├── 📱 Social Media Hub
+├── 📺 CCTV Monitor
+│
+└── ── SYSTEM ──
+    └── ⚙️ Settings
+        ├── General & Branding
+        ├── User Management
+        ├── Office Management
+        ├── Permissions
+        ├── Email Accounts
+        ├── Email History
+        └── Email Policies
+```
+
+---
+
+## 📅 BUILD PHASES — WHAT TO DO NEXT
+
+### ⚡ PHASE 6 — IMMEDIATE: Deploy & Stabilize Existing Work
+**Timeline: 1–2 days**
+
+| Task | Action |
+|---|---|
+| Deploy migrations 016–023 | Run in Supabase SQL Editor in order |
+| `npm run build` → Vercel deploy | Push latest code, verify build passes |
+| Test all existing pages | Login, Dashboard, Tasks & Events, Settings, Social Media, CCTV |
+| Fix any broken routes | Verify all 23 migrations applied cleanly |
+| Verify email system | Create event → check email sent → check email history |
+
+---
+
+### 🆕 PHASE 7 — New Module Database Setup
+**Timeline: 1 day**
+
+Create one migration file: `024_new_modules_schema.sql` with:
+- `work_schedules` table
+- `public_holidays` table
+- `staff_attendance` table
+- `leave_requests` table
+- `contact_network` table
+- `inventory_items` table
+- `visitor_log` table
+- `expense_reports` table
+- `expense_items` table
+- `expenditure_plans` table
+
+All with RLS policies matching the access rules above.
+
+---
+
+### 🆕 PHASE 8 — HR Work Schedule Module
+**Timeline: 3–4 days**
+
+| File | Action |
+|---|---|
+| `src/app/hr/schedule/page.jsx` | Main HR Schedule page |
+| `src/app/hr/schedule/attendance/page.jsx` | Attendance tracker |
+| `src/app/hr/schedule/leave/page.jsx` | Leave requests |
+| `src/app/hr/schedule/holidays/page.jsx` | Public holidays (admin) |
+| `src/app/api/hr/attendance/route.js` | CRUD API |
+| `src/app/api/hr/leave/route.js` | Leave request API |
+| `src/styles/hr.module.css` | HR page styling |
+
+---
+
+### 🆕 PHASE 9 — Contact Network & Visitor Log
+**Timeline: 2 days**
+
+| File | Action |
+|---|---|
+| `src/app/contacts/page.jsx` | Contact Network page |
+| `src/app/visitors/page.jsx` | Visitor Log page |
+| `src/app/api/contacts/route.js` | Contacts CRUD API |
+| `src/app/api/visitors/route.js` | Visitor log CRUD API |
+
+---
+
+### 🆕 PHASE 10 — Inventory Management
+**Timeline: 2 days**
+
+| File | Action |
+|---|---|
+| `src/app/inventory/page.jsx` | Inventory main page |
+| `src/app/api/inventory/route.js` | Inventory CRUD API |
+| Inventory PDF export | Use jsPDF for inventory report |
+
+---
+
+### 🆕 PHASE 11 — Expense & Expenditure System
+**Timeline: 3 days**
+
+| File | Action |
+|---|---|
+| `src/app/expenses/page.jsx` | Expense Reports list + monthly view |
+| `src/app/expenses/[id]/page.jsx` | Single report with line items |
+| `src/app/expenses/plans/page.jsx` | Expenditure Plans |
+| `src/app/api/expenses/route.js` | Expense report API |
+| `src/app/api/expenses/plans/route.js` | Expenditure plan API |
+| Monthly PDF export | Expense report PDF with logo |
+
+---
+
+### 🔄 PHASE 12 — Daily Schedule Enhancement + Notification Redesign
+**Timeline: 2 days**
+
+| File | Action |
+|---|---|
+| `src/app/tasks-events/page.jsx` | Add "Daily Schedule" tab (Today/Tomorrow/Important) |
+| `src/components/layout/Header.jsx` | Glassmorphism notification dropdown redesign |
+| `src/app/dashboard/page.jsx` | Add "Official Notices" notice board card |
+
+---
+
+### 🔄 PHASE 13 — Complete Pipeline, Students & Reports
+**Timeline: 4 days**
+
+| Area | Action |
+|---|---|
+| Pipeline Kanban | Full drag-and-drop with DnD Kit |
+| Student Profile tabs | Documents, Payments, Notes, History tabs complete |
+| Payment PDF | Verified Payment Receipt with logo + stamp |
+| Reports Analytics | Cross-office charts using Recharts |
+
+---
+
+### 🔄 PHASE 14 — General Settings & Branding Finalization
+**Timeline: 1–2 days**
+
+| Task | Action |
+|---|---|
+| General Settings page | Currency, timezone, branding preview |
+| Sidebar live update | Logo/name refresh on settings save |
+| Settings access control | Hide admin settings from non-admin staff |
+
+---
+
+### 🚀 PHASE 15 — Production Hardening & Go-Live
+**Timeline: 2–3 days**
+
+| Task | Action |
+|---|---|
+| Full end-to-end testing | All 28+ test cases + new module tests |
+| Performance audit | Check page load times, query optimization |
+| Security audit | RLS policies review, role permission matrix check |
+| Mobile responsiveness | Test all pages on mobile |
+| Staff training guide | Create user manual |
+| Final Vercel deploy | Tag release v1.0 |
+| Seed demo data | Seed offices, destinations, demo users |
+
+---
+
+## 🗄️ DATABASE MIGRATION STATUS
+
+| Migration | Name | Status |
+|---|---|---|
+| 001 | Initial schema (users, students, offices...) | ✅ Applied |
+| 002 | CCTV schema | ✅ Applied |
+| 003 | CCTV ordering | ✅ Applied |
+| 004 | App settings | ✅ Applied |
+| 005 | Programs update | ✅ Applied |
+| 006 | Advanced polishing | ✅ Applied |
+| 007 | Advanced staff management | ✅ Applied |
+| 008 | Overtime and history | ✅ Applied |
+| 009 | Official holidays 2026 | ✅ Applied |
+| 010 | Refactor app settings | ✅ Applied |
+| 011 | Payment audit system | ✅ Applied |
+| 012 | Payment system v2 | ✅ Applied |
+| 013 | Fix notification visibility | ✅ Applied |
+| 014 | Add task period | ✅ Applied |
+| 015 | Add metadata events | ✅ Applied |
+| 016 | User email accounts | ⏳ Deploy to production |
+| 017 | Email logging | ⏳ Deploy to production |
+| 018 | Email policies | ⏳ Deploy to production |
+| 019 | Fix email type column | ⏳ Deploy to production |
+| 020 | Create tasks and events | ⏳ Deploy to production |
+| 021 | Social media hub | ⏳ Deploy to production |
+| 022 | Login page & flag path settings | ⏳ Deploy to production |
+| 023 | Make settings public | ⏳ Deploy to production |
+| **024** | **New modules schema (HR, Contacts, Inventory, Visitors, Expenses)** | **🔜 To Build** |
+
+---
+
+## ✅ DEPLOYMENT CHECKLIST (Production)
+
+- [ ] All migrations 016–023 applied to Supabase production DB
+- [ ] `npm run build` passes with 0 errors
+- [ ] Deployed to Vercel (`gtgroupcrmproject.vercel.app`)
+- [ ] Environment variables confirmed in Vercel dashboard:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `GOOGLE_CLIENT_ID`
+  - `GOOGLE_CLIENT_SECRET`
+  - `NEXT_PUBLIC_GOOGLE_REDIRECT_URI`
+- [ ] CEO/Super Admin user account created
+- [ ] All 4 offices seeded (South Korea, Bangladesh, Sri Lanka, Vietnam)
+- [ ] Default destinations seeded (8 countries)
+- [ ] Test email sending end-to-end
+- [ ] Test all role permissions
+- [ ] Migration 024 applied (new modules)
+- [ ] All new module pages live and tested
+
+---
+
+## 📊 PROJECT SIZE SUMMARY
+
+| Category | Current | After New Modules |
+|---|---|---|
+| Database Migrations | 23 | 24+ |
+| Database Tables | 15+ | 25+ |
+| Lines of Code | 5,400+ | 9,000+ (est.) |
+| Pages/Routes | 12+ | 22+ |
+| API Routes | 8+ | 15+ |
+| CSS Files | 5+ | 10+ |
+
+---
+
+## 🎯 PRIORITY ORDER (Start Here)
+
+**RIGHT NOW — This Week:**
+1. ⚡ Apply migrations 016–023 to Supabase production
+2. ⚡ `npm run build` → fix any errors → push to Vercel
+3. ⚡ Verify all existing pages work in production
+
+**NEXT — New Features:**
+4. 🆕 Create migration 024 (new module schemas)
+5. 🆕 Build HR Work Schedule module (Module A)
+6. 🆕 Build Contact Network + Visitor Log (Modules B & E)
+7. 🆕 Build Inventory Management (Module C)
+8. 🆕 Build Expense Reports + Expenditure Plans (Modules F & G)
+9. 🔄 Enhance Tasks & Events with Daily Schedule (Module D)
+10. 🔄 Complete Pipeline Kanban, Student full profile, Reports
+
+**FINAL — Go-Live:**
+11. 🚀 Full testing, performance audit, staff training → Production v1.0
+
+---
+
+> ✅ **This is the UNIFIED MASTER PLAN for GT Group CRM.**
+> **Version 4.0 — April 16, 2026**
+> **All new modules from notebook + all existing work consolidated here.**

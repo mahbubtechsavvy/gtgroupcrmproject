@@ -1,0 +1,100 @@
+.kanbanBoard {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  min-height: calc(100vh - 200px);
+  background: rgba(10, 25, 47, 0.3);
+  border-radius: 16px;
+}
+
+.column {
+  min-width: 320px;
+  max-width: 320px;
+  background: rgba(15, 52, 96, 0.4);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border-top: 4px solid var(--color-gold);
+}
+
+.columnHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.columnTitle {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.count {
+  background: rgba(201, 162, 39, 0.1);
+  color: var(--color-gold);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 100px;
+}
+
+.studentCard {
+  background: var(--color-surface);
+  padding: 1.25rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: grab;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.studentCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-gold);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.studentName {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-white);
+  margin-bottom: 0.25rem;
+}
+
+.studentSub {
+  font-size: 0.75rem;
+  color: rgba(232, 232, 232, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.priorityIndicator {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.footer {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

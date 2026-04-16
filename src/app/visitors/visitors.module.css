@@ -1,0 +1,71 @@
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.logCard {
+  background: var(--color-surface);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 1rem;
+  background: rgba(15, 52, 96, 0.8);
+  font-size: 0.85rem;
+  color: var(--color-gold);
+}
+
+.table td {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.9rem;
+}
+
+.visitorInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.visitorName {
+  font-weight: 600;
+  color: var(--color-white);
+}
+
+.visitorContact {
+  font-size: 0.75rem;
+  color: rgba(232, 232, 232, 0.5);
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.statusIn { color: #22c55e; }
+.statusOut { color: rgba(232, 232, 232, 0.4); }
+
+.time {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  color: rgba(232, 232, 232, 0.6);
+}

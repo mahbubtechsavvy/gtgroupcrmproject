@@ -29,7 +29,8 @@
     "react-dom": "^18",
     "react-easy-crop": "^5.5.7",
     "react-phone-number-input": "^3.4.16",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "eslint": "^8",
