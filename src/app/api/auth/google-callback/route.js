@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 /**
  * Google OAuth Callback Handler
  * Processes OAuth authorization code and stores credentials

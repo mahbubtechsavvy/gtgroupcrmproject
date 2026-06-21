@@ -153,7 +153,7 @@ export default function TasksPage() {
       <div className={styles.header}>
         <div>
           <h1 className="page-title">Tasks & Events</h1>
-          <p className="page-subtitle">Manage your team's tasks and calendar events</p>
+          <p className="page-subtitle">Manage your team&apos;s tasks and calendar events</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowTaskModal(true)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -4,7 +4,8 @@
  * Phase 5 - April 9, 2026
  */
 
-import { supabase } from './supabase';
+import { getSupabaseClient } from './supabase';
+const supabase = getSupabaseClient();
 
 /**
  * Create a new email policy

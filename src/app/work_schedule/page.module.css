@@ -1,0 +1,16 @@
+/* Work Schedule module styles */
+
+.work-schedule-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #f5f7fa;
+  border-radius: 16px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+}
+
+h1 {\  font-size: 2.5rem;\  font-weight: 900;\  color: var(--primary-color);\  margin-bottom: 1rem;\}
+
+p {\  color: #888;\  font-size: 1rem;\}
+
+/* Add more styles as the component evolves */

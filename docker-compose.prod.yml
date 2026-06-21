@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # 1. Reverse Proxy with Auto HTTPS SSL
+  caddy:
+    image: caddy:2.7-alpine
+    container_name: gt-crm-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+  # 2. Next.js CRM & ERP Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gt-crm-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/postgres?sslmode=disable
+      - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - LIBRETRANSLATE_URL=http://libretranslate:5000
+      - DEFAULT_TRANSLATION_ENGINE=libretranslate
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - NEXT_PUBLIC_GOOGLE_REDIRECT_URI=${NEXT_PUBLIC_GOOGLE_REDIRECT_URI}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      libretranslate:
+        condition: service_healthy
+
+  # 3. PostgreSQL Database Engine
+  db:
+    image: postgres:16-alpine
+    container_name: gt-crm-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432" # Open for remote backups or replication if needed, else close
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Performance tuning parameters for 32GB RAM KVM VPS
+    command: >
+      postgres
+      -c shared_buffers=8GB
+      -c effective_cache_size=24GB
+      -c work_mem=64MB
+      -c maintenance_work_mem=2GB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c checkpoint_completion_target=0.9
+      -c checkpoint_timeout=15min
+      -c max_connections=500
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 4. Redis Cache & Queue Store (BullMQ / Session cache)
+  redis:
+    image: redis:7-alpine
+    container_name: gt-crm-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+
+  # 5. Self-Hosted Translation Service
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: gt-crm-translate
+    restart: unless-stopped
+    environment:
+      - LT_LOAD_ONLY=en,ko,bn,vi,si
+      - LT_UPDATE_MODELS=true
+      - LT_API_KEYS=false
+      - LT_HOST=0.0.0.0
+    volumes:
+      - libretranslate_models:/home/libretranslate/.local/share/argos-translate/packages
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  pgdata:
+  redisdata:
+  libretranslate_models:
+  caddy_data:
+  caddy_config:

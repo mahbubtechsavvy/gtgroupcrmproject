@@ -9,7 +9,7 @@ import {
   deactivatePolicy,
   getPolicyAuditLog,
 } from '@/lib/emailPolicies';
-import { useAuth } from '@/lib/auth';
+
 
 /**
  * Super Admin Email Policies Management Page
@@ -441,7 +441,7 @@ export default function EmailPoliciesPage() {
           <p>
             For each type, you can specify which email account to use:
             <br />
-            • <strong>Primary:</strong> User's primary email account
+            • <strong>Primary:</strong> User&apos;s primary email account
             <br />
             • <strong>Gmail:</strong> Gmail account with OAuth
             <br />

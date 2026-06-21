@@ -6,6 +6,7 @@ import { getSupabaseClient } from '@/lib/supabase';
 import { isSuperAdmin, getRoleLabel } from '@/lib/auth';
 import { initiateGmailOAuthForEmailAccount } from '@/lib/googleOAuth';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
+import styles from './users.module.css';
 
 const ROLES = ['ceo', 'coo', 'it_manager', 'office_manager', 'senior_counselor', 'counselor', 'receptionist'];
 
@@ -16,7 +17,7 @@ export default function UsersPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editUser, setEditUser] = useState(null);
-  const [form, setForm] = useState({ full_name: '', email: '', role: 'counselor', office_id: '', phone: '', password: '', crm_email: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', role: 'counselor', office_id: '', phone: '', password: '', crm_email: '', affiliated_companies: [] });
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [cropModalSrc, setCropModalSrc] = useState(null);
@@ -208,6 +209,7 @@ export default function UsersPage() {
         phone: form.phone || null,
         avatar_url: avatar_url,
         is_active: true,
+        affiliated_companies: form.affiliated_companies || []
       });
     }
 
@@ -265,7 +267,8 @@ export default function UsersPage() {
       role: form.role,
       office_id: form.office_id || null,
       phone: form.phone || null,
-      avatar_url: avatar_url
+      avatar_url: avatar_url,
+      affiliated_companies: form.affiliated_companies || []
     }).eq('id', editUser.id);
     
     setSaving(false);
@@ -282,7 +285,7 @@ export default function UsersPage() {
 
   const openEdit = (user) => {
     setEditUser(user);
-    setForm({ full_name: user.full_name, email: user.email, role: user.role, office_id: user.office_id || '', phone: user.phone || '', password: '', crm_email: '' });
+    setForm({ full_name: user.full_name, email: user.email, role: user.role, office_id: user.office_id || '', phone: user.phone || '', password: '', crm_email: '', affiliated_companies: user.affiliated_companies || [] });
     setAvatarFile(null);
     setAvatarPreview(user.avatar_url || null);
     setShowForm(true);
@@ -315,7 +318,7 @@ export default function UsersPage() {
           <h1 className="page-title">User Management</h1>
           <p className="page-subtitle">{users.length} users registered</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditUser(null); setForm({ full_name: '', email: '', role: 'counselor', office_id: '', phone: '', password: '', crm_email: '' }); setAvatarFile(null); setAvatarPreview(null); setShowForm(true); setEmailAccounts([]); }}>
+        <button className="btn btn-primary" onClick={() => { setEditUser(null); setForm({ full_name: '', email: '', role: 'counselor', office_id: '', phone: '', password: '', crm_email: '', affiliated_companies: [] }); setAvatarFile(null); setAvatarPreview(null); setShowForm(true); setEmailAccounts([]); }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
@@ -348,72 +351,76 @@ export default function UsersPage() {
       {loading ? (
         <div className="empty-state"><div className="loading-spinner" /></div>
       ) : (
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Employee ID</th><th>User</th><th>Role</th><th>Office</th><th>Phone</th><th>Status</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(u => (
-                <tr key={u.id}>
-                  <td className="text-sm font-mono font-bold" style={{ color: 'var(--color-gold)' }}>
-                    {u.employee_id || 'Generating...'}
-                  </td>
-                  <td>
-                    <div className="flex gap-12" style={{ alignItems: 'center' }}>
-                      <div className="avatar avatar-sm flex-none overflow-hidden" style={{ borderRadius: '50%' }}>
-                        {u.avatar_url ? (
-                            <img src={u.avatar_url} alt={u.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div className={styles.gridWrapper}>
+          <div className={styles.cardGrid}>
+            {users.map(u => (
+              <div key={u.id} className={styles.userCard}>
+                {/* Card Header */}
+                <div className={styles.cardHeader}>
+                  <div className={styles.cardAvatar}>
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt={u.full_name} />
+                    ) : (
+                      <span>{u.full_name?.charAt(0)?.toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className={styles.cardActions}>
+                    <button className={styles.iconBtn} onClick={() => openEdit(u)} title="Edit">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    {u.id !== currentUser?.id && (
+                      <button
+                        className={`${styles.iconBtn} ${u.is_active ? styles.dangerBtn : styles.successBtn}`}
+                        onClick={() => toggleActive(u)}
+                        title={u.is_active ? 'Deactivate' : 'Activate'}
+                      >
+                        {u.is_active ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
                         ) : (
-                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                              {u.full_name?.charAt(0)?.toUpperCase()}
-                            </span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm" style={{ color: 'var(--color-white)' }}>{u.full_name}</p>
-                        <p className="text-xs text-muted">{u.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${isSuperAdmin(u.role) ? 'badge-gold' : 'badge-muted'}`}>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <div className={styles.cardBody}>
+                  <h3 className={styles.userName}>{u.full_name}</h3>
+                  <p className={styles.userEmail}>{u.email}</p>
+                  <p className={styles.userPhone}>{u.phone || 'No Phone'}</p>
+                </div>
+
+                {/* Card Footer */}
+                <div className={styles.cardFooter}>
+                  <div className={styles.tagRow}>
+                    <span className={`badge ${isSuperAdmin(u.role) ? 'badge-gold' : 'badge-muted'}`} style={{ fontSize: '0.7rem', padding: '2px 6px' }}>
                       {getRoleLabel(u.role)}
                     </span>
-                  </td>
-                  <td className="text-sm text-muted">{u.offices?.name || '—'}</td>
-                  <td className="text-sm text-muted">{u.phone || '—'}</td>
-                  <td>
-                    <span className={`badge ${u.is_active ? 'badge-success' : 'badge-danger'}`}>
+                    <span className={`badge ${u.is_active ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem', padding: '2px 6px' }}>
                       {u.is_active ? 'Active' : 'Inactive'}
                     </span>
-                  </td>
-                  <td>
-                    <div className="flex gap-4">
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(u)} title="Edit">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                      </button>
-                      {u.id !== currentUser?.id && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => toggleActive(u)}
-                          title={u.is_active ? 'Deactivate' : 'Activate'}
-                          style={{ color: u.is_active ? 'var(--color-danger)' : 'var(--color-success)' }}
-                        >
-                          {u.is_active ? '⏸' : '▶'}
-                        </button>
-                      )}
+                  </div>
+                  <div className={styles.tagRow} style={{ marginTop: '4px' }}>
+                    <span className={styles.empId}>{u.employee_id || 'Generating...'}</span>
+                    <div className={styles.officeLabel}>{u.offices?.name || 'Global / Head Office'}</div>
+                  </div>
+                  {u.affiliated_companies?.length > 0 && (
+                    <div className={styles.tagRow} style={{ marginTop: '6px', gap: '4px' }}>
+                      {u.affiliated_companies.map(c => (
+                        <span key={c} className={`badge ${c === 'nexus' ? 'badge-primary' : 'badge-gold'}`} style={{ fontSize: '0.6rem', padding: '1px 5px', opacity: 0.8 }}>
+                          {c === 'nexus' ? 'Nexus' : 'Study Abroad'}
+                        </span>
+                      ))}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -487,6 +494,44 @@ export default function UsersPage() {
                   <div className="form-group">
                     <label className="form-label">Phone</label>
                     <input className="form-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label className="form-label">Company Affiliation (Multiple Selection)</label>
+                    <div className="flex gap-24 mt-8">
+                      <label className="flex align-center gap-8 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={form.affiliated_companies?.includes('study_abroad')} 
+                          onChange={e => {
+                            const companies = [...(form.affiliated_companies || [])];
+                            if (e.target.checked) companies.push('study_abroad');
+                            else {
+                              const index = companies.indexOf('study_abroad');
+                              if (index > -1) companies.splice(index, 1);
+                            }
+                            setForm({...form, affiliated_companies: companies});
+                          }}
+                        />
+                        <span className="text-sm">Study Abroad Consultancy</span>
+                      </label>
+                      <label className="flex align-center gap-8 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={form.affiliated_companies?.includes('nexus')} 
+                          onChange={e => {
+                            const companies = [...(form.affiliated_companies || [])];
+                            if (e.target.checked) companies.push('nexus');
+                            else {
+                              const index = companies.indexOf('nexus');
+                              if (index > -1) companies.splice(index, 1);
+                            }
+                            setForm({...form, affiliated_companies: companies});
+                          }}
+                        />
+                        <span className="text-sm">Nexus Digital Agency</span>
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted mt-8">Tag staff members who work across specific group companies.</p>
                   </div>
 
                   {/* Email Management Section - Only show when editing */}

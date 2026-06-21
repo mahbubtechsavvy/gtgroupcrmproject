@@ -1,9 +1,10 @@
 // API Route: Exchange Google OAuth code for tokens
 // POST /api/google-oauth-exchange
-import { supabase } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { connectGoogleAccount } from '@/lib/emailAccountManager';
 
 export async function POST(request) {
+  const supabase = createServerSupabaseClient();
   try {
     const { code, emailAccountId } = await request.json();
 

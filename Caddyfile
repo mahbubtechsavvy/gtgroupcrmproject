@@ -1,0 +1,37 @@
+# GT Group CRM Reverse Proxy Configuration
+
+{
+    email admin@gtgroupedu.com
+}
+
+# 1. Main CRM Application Interface
+crm.gtgroupedu.com {
+    reverse_proxy web:3000
+    
+    # Enable Gzip compression
+    encode gzip
+    
+    # Custom headers for security
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-XSS-Protection "1; mode=block"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}
+
+# 2. Private Translation API endpoint (only accessed internally or securely)
+translate-api.gtgroupedu.com {
+    reverse_proxy libretranslate:5000
+    
+    # Restrict access to office IP addresses (optional - uncomment and edit)
+    # @allowed_ips {
+    #     remote_ip 203.0.113.50  # Bangladesh Office IP
+    #     remote_ip 198.51.100.25 # South Korea Office IP
+    # }
+    # handle @allowed_ips {
+    #     reverse_proxy libretranslate:5000
+    # }
+    # respond "Unauthorized access" 403
+}

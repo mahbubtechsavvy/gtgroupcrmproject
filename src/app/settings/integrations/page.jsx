@@ -151,7 +151,7 @@ export default function IntegrationsPage() {
             <input 
               className="form-input" 
               disabled
-              value="http://localhost:3002/api/auth/google-oauth-callback"
+              value={`${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3005'}/api/auth/google-callback`}
             />
             <p className="text-xs text-muted mt-8">Configure this exact URL in Google Cloud Console under Authorized Redirect URIs</p>
           </div>
@@ -185,6 +185,72 @@ export default function IntegrationsPage() {
               onChange={e => handleChange('whatsapp_token', e.target.value)}
             />
             <p className="text-xs text-muted mt-8">Currently using free &quot;Click-to-Send&quot; manual method. Automated bot requires WhatsApp Cloud API.</p>
+          </div>
+        </div>
+
+        {/* Chat & AI Features */}
+        <div className="card">
+          <div className="flex align-center gap-12 mb-16">
+            <div style={{ fontSize: '1.5rem' }}>✨</div>
+            <h3 className="section-title">Chat & AI Features</h3>
+          </div>
+          <p className="text-sm text-muted mb-20">Configure AI-powered tools for the GT Group Chat system.</p>
+
+          <div className="form-group">
+            <label className="form-label">Google Translate API Key</label>
+            <input 
+              className="form-input" 
+              type="password"
+              placeholder="AIzaSy..." 
+              value={localSettings.google_translate_api_key || ''}
+              onChange={e => handleChange('google_translate_api_key', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group mt-16">
+            <label className="form-label">DeepL API Key (Optional)</label>
+            <input 
+              className="form-input" 
+              type="password"
+              placeholder="DeepL-Auth-Key..." 
+              value={localSettings.deepl_api_key || ''}
+              onChange={e => handleChange('deepl_api_key', e.target.value)}
+            />
+          </div>
+
+          <div className="form-group mt-16">
+            <label className="form-label">LibreTranslate URL (Optional)</label>
+            <input 
+              className="form-input" 
+              placeholder="https://translate.your-domain.com" 
+              value={localSettings.libretranslate_url || ''}
+              onChange={e => handleChange('libretranslate_url', e.target.value)}
+            />
+            <p className="text-xs text-muted mt-8">Self-hosted or public LibreTranslate instance URL.</p>
+          </div>
+
+          <div className="form-group mt-16">
+            <label className="form-label">Default Translation Engine</label>
+            <select 
+              className="form-input"
+              value={localSettings.default_translation_engine || 'google'}
+              onChange={e => handleChange('default_translation_engine', e.target.value)}
+            >
+              <option value="google">Google Translate</option>
+              <option value="deepl">DeepL</option>
+              <option value="libre">LibreTranslate</option>
+            </select>
+          </div>
+
+          <div className="form-group mt-16 flex align-center gap-12">
+            <input 
+              type="checkbox"
+              id="enable_translation"
+              checked={localSettings.enable_chat_translation === 'true'}
+              onChange={e => handleChange('enable_chat_translation', e.target.checked ? 'true' : 'false')}
+              className="w-16 h-16 rounded border-white/10 bg-white/5 text-gold focus:ring-gold"
+            />
+            <label htmlFor="enable_translation" className="text-sm font-medium text-text">Enable Chat Translation</label>
           </div>
         </div>
       </div>

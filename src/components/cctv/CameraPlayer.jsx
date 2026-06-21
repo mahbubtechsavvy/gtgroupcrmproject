@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
-import { Maximize2, Minimize2, Volume2, VolumeX, AlertCircle, RefreshCw } from 'lucide-react';
+import { Maximize2, Minimize2, Volume2, VolumeX, AlertCircle, RefreshCw, Power } from 'lucide-react';
 import styles from './CameraPlayer.module.css';
 
-export default function CameraPlayer({ streamUrl, cameraName, onRetry }) {
+export default function CameraPlayer({ streamUrl, cameraName, onRetry, onToggle }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const hlsRef = useRef(null);
@@ -114,9 +114,18 @@ export default function CameraPlayer({ streamUrl, cameraName, onRetry }) {
     <div ref={containerRef} className={`${styles.playerContainer} ${isFullscreen ? styles.fullscreen : ''}`}>
       <div className={styles.header}>
         <span className={styles.cameraName}>{cameraName}</span>
-        <div className={styles.status}>
-          <span className={`${styles.dot} ${isPlaying ? styles.online : styles.offline}`} />
-          {isPlaying ? 'LIVE' : 'OFFLINE'}
+        <div className={styles.headerRight}>
+          <div className={styles.status}>
+            <span className={`${styles.dot} ${isPlaying ? styles.online : styles.offline}`} />
+            {isPlaying ? 'LIVE' : 'OFFLINE'}
+          </div>
+          <button 
+            className={`${styles.powerBtn} ${streamUrl ? styles.powerOn : styles.powerOff}`}
+            onClick={onToggle}
+            title={streamUrl ? 'Turn Camera Off' : 'Turn Camera On'}
+          >
+            <Power size={12} />
+          </button>
         </div>
       </div>
 

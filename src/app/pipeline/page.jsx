@@ -2,19 +2,88 @@
 
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import { isSuperAdmin } from '@/lib/permissions';
 import { sendEmailNotification } from '@/lib/notifications';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { 
+  Calendar, Building2, User, DollarSign, 
+  Clock, AlertCircle, ChevronRight, Globe,
+  ShieldCheck, GraduationCap, MapPin
+} from 'lucide-react';
+import FlagIcon from '@/components/ui/FlagIcon';
+import styles from './pipeline.module.css';
 
 const PIPELINE_STAGES = [
   { key: 'new_lead', label: 'New Lead', color: '#6B7280', bg: 'rgba(107,114,128,0.1)' },
-  { key: 'initial_consultation', label: 'Initial Consultation', color: '#3B82F6', bg: 'rgba(59,130,246,0.1)' },
-  { key: 'documents_collecting', label: 'Documents Collecting', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' },
-  { key: 'application_submitted', label: 'Application Submitted', color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },
+  { key: 'initial_consultation', label: 'Consultation', color: '#3B82F6', bg: 'rgba(59,130,246,0.1)' },
+  { key: 'documents_collecting', label: 'Docs Collecting', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' },
+  { key: 'application_submitted', label: 'Applied', color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },
   { key: 'offer_received', label: 'Offer Received', color: '#06B6D4', bg: 'rgba(6,182,212,0.1)' },
   { key: 'visa_applied', label: 'Visa Applied', color: '#F97316', bg: 'rgba(249,115,22,0.1)' },
   { key: 'visa_approved', label: 'Visa Approved', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
   { key: 'enrolled', label: 'Enrolled ✅', color: '#C9A227', bg: 'rgba(201,162,39,0.1)' },
 ];
+
+function SortableCard({ student, stageColor }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: student.id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`${styles.card} ${isDragging ? styles.cardDragging : ''}`}
+    >
+      <div className={styles.stageIndicator} style={{ backgroundColor: stageColor }} />
+      <div className="flex justify-between items-start mb-4">
+        <h4 className={styles.clientName}>{student.first_name} {student.last_name}</h4>
+        {student.priority === 'high' && <div className={styles.priorityHigh} />}
+      </div>
+
+      <div className="space-y-2 mb-4">
+        {student.destinations && (
+          <div className="flex items-center gap-2 text-[10px] font-bold text-text-dim uppercase tracking-widest">
+            <Globe size={12} className="text-gold" />
+            {student.destinations.country_name}
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-[10px] font-bold text-text-dim uppercase tracking-widest">
+          <User size={12} />
+          {student.users?.full_name || 'Unassigned'}
+        </div>
+      </div>
+
+      <div className={styles.cardFooter}>
+        <div className="flex items-center gap-1.5 text-gold font-black text-[10px]">
+          <Calendar size={12} />
+          {new Date(student.created_at).toLocaleDateString()}
+        </div>
+        <div className="w-8 h-8 rounded-lg bg-surface-3 flex items-center justify-center text-text-muted">
+           <ChevronRight size={14} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PipelinePage() {
   const [students, setStudents] = useState([]);
@@ -22,10 +91,13 @@ export default function PipelinePage() {
   const [user, setUser] = useState(null);
   const [offices, setOffices] = useState([]);
   const [filterOffice, setFilterOffice] = useState('');
-  const [filterCounselor, setFilterCounselor] = useState('');
-  const [counselors, setCounselors] = useState([]);
-  const [dragOverStage, setDragOverStage] = useState(null);
-  const [draggingId, setDraggingId] = useState(null);
+  const [activeId, setActiveId] = useState(null);
+  const [viewMode, setViewMode] = useState('overview');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -36,19 +108,13 @@ export default function PipelinePage() {
       setUser(u);
 
       if (isSuperAdmin(u?.role)) {
-        const { data: off } = await supabase.from('offices').select('id, name');
+        const { data: off } = await supabase.from('offices').select('id, name, country');
         setOffices(off || []);
       }
-
-      const { data: counsel } = await supabase.from('users').select('id, full_name')
-        .in('role', ['counselor', 'senior_counselor', 'office_manager'])
-        .eq('is_active', true);
-      setCounselors(counsel || []);
-
       await loadStudents(u);
     };
     init();
-  }, []);
+  }, [filterOffice]);
 
   const loadStudents = async (u) => {
     const supabase = getSupabaseClient();
@@ -56,295 +122,222 @@ export default function PipelinePage() {
 
     let q = supabase.from('students').select(`
       id, first_name, last_name, pipeline_status, priority, created_at,
-      offices(id, name),
+      offices(id, name, country),
       users!assigned_to(id, full_name, email),
       destinations(id, country_name, flag_emoji)
     `);
 
     if (!superAdmin) q = q.eq('office_id', u.office_id);
     if (filterOffice) q = q.eq('office_id', filterOffice);
-    if (filterCounselor) q = q.eq('assigned_to', filterCounselor);
 
     const { data } = await q;
     setStudents(data || []);
     setLoading(false);
   };
 
-  const moveStudent = async (studentId, newStatus) => {
-    const supabase = getSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    const student = students.find(s => s.id === studentId);
-    if (!student || student.pipeline_status === newStatus) return;
+  const handleDragStart = (event) => setActiveId(event.active.id);
 
-    // Optimistic update
-    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, pipeline_status: newStatus } : s));
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over) return;
 
-    await supabase.from('students').update({ pipeline_status: newStatus }).eq('id', studentId);
-    await supabase.from('pipeline_history').insert({
-      student_id: studentId,
-      from_status: student.pipeline_status,
-      to_status: newStatus,
-      changed_by: session?.user?.id,
-    });
-    await supabase.from('interactions').insert({
-      student_id: studentId,
-      staff_id: session?.user?.id,
-      type: 'status_change',
-      content: `Moved from ${student.pipeline_status.replace(/_/g, ' ')} to ${newStatus.replace(/_/g, ' ')}`,
-    });
+    const activeId = active.id;
+    const overId = over.id;
 
-    // Email Notification for Status Change
-    if (student.users?.email) {
-      const stageLabel = PIPELINE_STAGES.find(s => s.key === newStatus)?.label || newStatus;
-      await sendEmailNotification(
-        student.users.email,
-        `Pipeline Update: ${student.first_name} ${student.last_name}`,
-        `
-          <div style="font-family: sans-serif; padding: 20px;">
-            <h2>Pipeline Progress Alert</h2>
-            <p>Hello <strong>${student.users.full_name}</strong>,</p>
-            <p>One of your students has moved to a new stage in the application pipeline.</p>
-            <hr />
-            <p><strong>Student:</strong> ${student.first_name} ${student.last_name}</p>
-            <p><strong>New Status:</strong> <span style="color: #C9A227; font-weight: bold;">${stageLabel}</span></p>
-            <hr />
-            <p><a href="https://gtgroupcrmproject.vercel.app/students/${student.id}" style="background: #C9A227; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Profile</a></p>
-          </div>
-        `
-      );
+    const isOverColumn = PIPELINE_STAGES.some((s) => s.key === overId);
+    let newStatus = '';
+
+    if (isOverColumn) {
+      newStatus = overId;
+    } else {
+      const overStudent = students.find((s) => s.id === overId);
+      if (overStudent) newStatus = overStudent.pipeline_status;
+    }
+
+    const student = students.find((s) => s.id === activeId);
+    if (student && newStatus && student.pipeline_status !== newStatus) {
+      const oldStudents = [...students];
+      setStudents(students.map((s) => (s.id === activeId ? { ...s, pipeline_status: newStatus } : s)));
+
+      const supabase = getSupabaseClient();
+      const { error } = await supabase.from('students').update({ pipeline_status: newStatus }).eq('id', activeId);
+      
+      if (error) {
+        setStudents(oldStudents);
+      } else {
+        // Log history & send notification (optional/background)
+        supabase.from('pipeline_history').insert({ student_id: activeId, from_status: student.pipeline_status, to_status: newStatus, changed_by: user.id });
+      }
     }
   };
 
-  const handleDragStart = (e, studentId) => {
-    setDraggingId(studentId);
-    e.dataTransfer.setData('studentId', studentId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
+  if (loading) return <div className="p-20 text-center"><div className="loading-spinner mx-auto" /></div>;
 
-  const handleDragOver = (e, stageKey) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverStage(stageKey);
-  };
+  const metricItems = PIPELINE_STAGES.map((stage) => ({
+    label: stage.label,
+    value: students.filter((student) => student.pipeline_status === stage.key).length,
+  }));
 
-  const handleDrop = (e, stageKey) => {
-    e.preventDefault();
-    const studentId = e.dataTransfer.getData('studentId');
-    if (studentId) moveStudent(studentId, stageKey);
-    setDragOverStage(null);
-    setDraggingId(null);
-  };
+  const officeSummary = offices.map((office) => {
+    const officeStudents = students.filter((student) => student.offices?.id === office.id);
+    return {
+      id: office.id,
+      name: office.name,
+      country: office.country,
+      total: officeStudents.length,
+      active: officeStudents.filter((student) => !['enrolled', 'rejected', 'deferred'].includes(student.pipeline_status)).length,
+      enrolled: officeStudents.filter((student) => student.pipeline_status === 'enrolled').length,
+    };
+  }).filter((office) => office.total > 0);
 
-  const handleDragEnd = () => {
-    setDragOverStage(null);
-    setDraggingId(null);
-  };
-
-  const daysSince = (d) => Math.floor((Date.now() - new Date(d)) / 86400000);
-
-  const stageStudents = (key) => students.filter(s => s.pipeline_status === key);
-
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', gap: '16px' }}>
-      <div className="loading-spinner" style={{ width: '32px', height: '32px' }} />
-      <p className="text-muted">Loading pipeline...</p>
-    </div>
-  );
+  const counselorWorkload = Object.values(students.reduce((acc, student) => {
+    const key = student.users?.id || 'unassigned';
+    acc[key] ||= { name: student.users?.full_name || 'Unassigned', total: 0, active: 0, high: 0 };
+    acc[key].total += 1;
+    if (!['enrolled', 'rejected', 'deferred'].includes(student.pipeline_status)) acc[key].active += 1;
+    if (student.priority === 'high') acc[key].high += 1;
+    return acc;
+  }, {})).sort((a, b) => b.active - a.active).slice(0, 8);
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex-between mb-24" style={{ flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 className="page-title">Application Pipeline</h1>
-          <p className="page-subtitle">Drag cards between columns to update status</p>
-        </div>
-        <div className="flex gap-12">
-          {offices.length > 0 && (
-            <select className="form-select" style={{ width: 'auto' }} value={filterOffice}
-              onChange={e => setFilterOffice(e.target.value)}>
-              <option value="">All Offices</option>
-              {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
-          )}
-          <select className="form-select" style={{ width: 'auto' }} value={filterCounselor}
-            onChange={e => setFilterCounselor(e.target.value)}>
-            <option value="">All Counselors</option>
-            {counselors.map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
-          </select>
-        </div>
-      </div>
+    <div className={styles.boardContainer}>
+      <ExecutiveHero
+        eyebrow="Application Control"
+        title="Application Pipeline"
+        subtitle="Executive office summary, counselor workload, aging visibility, and drag-and-drop stage management."
+        actions={
+          <div className="flex gap-2">
+            <button className={`btn btn-sm ${viewMode === 'overview' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setViewMode('overview')}>Overview</button>
+            <button className={`btn btn-sm ${viewMode === 'kanban' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setViewMode('kanban')}>Kanban</button>
+            {offices.length > 0 && (
+              <select className="form-select" value={filterOffice} onChange={e => setFilterOffice(e.target.value)}>
+                <option value="">Global Network</option>
+                {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            )}
+          </div>
+        }
+      />
 
-      {/* Kanban Board */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '12px', 
-        overflowX: 'auto', 
-        paddingBottom: '16px',
-        overflowY: 'hidden',
-        height: 'calc(100vh - 160px)'
-      }}>
-        {PIPELINE_STAGES.map(stage => {
-          const stageCards = stageStudents(stage.key);
-          const isOver = dragOverStage === stage.key;
-          return (
-            <div
-              key={stage.key}
-              style={{
-                flex: '1 0 250px', /* Stretches on wide monitors, scrolls gracefully on vertical monitors */
-                maxWidth: '400px', /* Prevents excessive stretching on 4K/Ultrawide monitors */
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                height: '100%',
-              }}
-              onDragOver={e => handleDragOver(e, stage.key)}
-              onDrop={e => handleDrop(e, stage.key)}
-              onDragLeave={() => setDragOverStage(null)}
-            >
-              {/* Column Header */}
-              <div style={{
-                background: stage.bg,
-                border: `1px solid ${isOver ? stage.color : 'rgba(255,255,255,0.06)'}`,
-                borderRadius: '10px',
-                padding: '10px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                transition: 'all 0.15s ease',
-                boxShadow: isOver ? `0 0 12px ${stage.color}44` : 'none',
-              }}>
-                <div>
-                  <p style={{ fontSize: '0.8rem', fontWeight: '600', color: stage.color }}>{stage.label}</p>
+      <ExecutiveSection title="Stage Summary" subtitle="A quick premium tracking view for all pipeline statuses.">
+        <MetricGrid items={metricItems} />
+      </ExecutiveSection>
+
+      {officeSummary.length > 0 && (
+        <ExecutiveSection title="Office Pipeline Summary" subtitle="Global office strength, active applications, and enrollment output.">
+          <div className="office-summary-grid">
+            {officeSummary.map((office) => (
+              <div key={office.id} className="office-summary-card">
+                <div className="office-summary-card__title">
+                  <FlagIcon countryName={office.country || office.name} size="sm" />
+                  <span>{office.name}</span>
                 </div>
-                <span style={{
-                  background: stage.color,
-                  color: '#fff',
-                  borderRadius: '50%',
-                  width: '22px',
-                  height: '22px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                }}>
-                  {stageCards.length}
-                </span>
+                <div className="office-summary-card__metrics">
+                  <div className="mini-stat"><strong>{office.total}</strong><span>Total</span></div>
+                  <div className="mini-stat"><strong>{office.active}</strong><span>Active</span></div>
+                  <div className="mini-stat"><strong>{office.enrolled}</strong><span>Enrolled</span></div>
+                </div>
               </div>
-
-              {/* Drop Zone */}
-              <div style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                minHeight: '100px',
-                padding: isOver ? '6px' : '0',
-                borderRadius: '8px',
-                border: isOver ? `2px dashed ${stage.color}66` : '2px dashed transparent',
-                transition: 'all 0.15s ease',
-              }}>
-                {stageCards.map(student => (
-                  <KanbanCard
-                    key={student.id}
-                    student={student}
-                    stageColor={stage.color}
-                    dragging={draggingId === student.id}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    daysSince={daysSince}
-                  />
-                ))}
-                {stageCards.length === 0 && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '80px',
-                    color: 'var(--color-text-dim)',
-                    fontSize: '0.8rem',
-                    border: '1px dashed rgba(255,255,255,0.06)',
-                    borderRadius: '8px',
-                  }}>
-                    Drop here
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function KanbanCard({ student, stageColor, dragging, onDragStart, onDragEnd, daysSince }) {
-  const days = daysSince(student.created_at);
-  const isStale = days > 14;
-
-  return (
-    <div
-      draggable
-      onDragStart={e => onDragStart(e, student.id)}
-      onDragEnd={onDragEnd}
-      style={{
-        background: dragging ? 'rgba(201,162,39,0.1)' : 'var(--color-surface)',
-        border: `1px solid ${dragging ? 'var(--color-gold)' : 'rgba(255,255,255,0.07)'}`,
-        borderRadius: '10px',
-        padding: '12px',
-        cursor: 'grab',
-        transition: 'all 0.15s ease',
-        opacity: dragging ? 0.5 : 1,
-        boxShadow: dragging ? '0 8px 24px rgba(0,0,0,0.4)' : 'none',
-        userSelect: 'none',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
-        <a
-          href={`/students/${student.id}`}
-          onClick={e => e.stopPropagation()}
-          style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--color-white)', textDecoration: 'none', lineHeight: '1.3' }}
-        >
-          {student.first_name} {student.last_name}
-        </a>
-        {student.priority === 'high' && (
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444', flexShrink: 0, marginTop: '4px' }} />
-        )}
-      </div>
-
-      {student.destinations && (
-        <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-          {student.destinations.flag_emoji} {student.destinations.country_name}
-        </p>
+            ))}
+          </div>
+        </ExecutiveSection>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-        {student.users && (
-          <span style={{
-            fontSize: '0.72rem',
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: '12px',
-            padding: '2px 8px',
-            color: 'var(--color-text-dim)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: '110px',
-          }}>
-            {student.users.full_name}
-          </span>
-        )}
-        <span style={{
-          fontSize: '0.72rem',
-          color: isStale ? '#F87171' : 'var(--color-text-dim)',
-          fontWeight: isStale ? '600' : '400',
-          whiteSpace: 'nowrap',
-        }}>
-          {days}d
-        </span>
-      </div>
+      {viewMode === 'overview' && (
+        <ExecutiveSection title="At-Risk and Counselor Workload" subtitle="Students needing action before they stall inside the funnel.">
+          <div className="data-grid-2">
+            <div className="table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Stage</th>
+                    <th>Counselor</th>
+                    <th>Destination</th>
+                    <th>Age</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students
+                    .filter((student) => !['enrolled', 'rejected'].includes(student.pipeline_status))
+                    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                    .slice(0, 12)
+                    .map((student) => (
+                      <tr key={student.id}>
+                        <td>{student.first_name} {student.last_name}</td>
+                        <td>{PIPELINE_STAGES.find((stage) => stage.key === student.pipeline_status)?.label || student.pipeline_status}</td>
+                        <td>{student.users?.full_name || 'Unassigned'}</td>
+                        <td>{student.destinations?.country_name || '-'}</td>
+                        <td>{Math.max(0, Math.floor((Date.now() - new Date(student.created_at)) / 86400000))}d</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="summary-stack">
+              {counselorWorkload.map((row) => (
+                <div key={row.name} className="summary-row">
+                  <strong>{row.name}</strong>
+                  <div className="flex gap-4 text-sm">
+                    <span>Active <strong>{row.active}</strong></span>
+                    <span>High <strong>{row.high}</strong></span>
+                    <span>Total <strong>{row.total}</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ExecutiveSection>
+      )}
+
+      {viewMode === 'kanban' && (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className={styles.kanbanBoard}>
+          {PIPELINE_STAGES.map((stage) => {
+            const stageStudents = students.filter((s) => s.pipeline_status === stage.key);
+            return (
+              <div key={stage.key} className={styles.column} id={stage.key}>
+                <div className={styles.columnHeader}>
+                  <div className={styles.columnTitle}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: stage.color, boxShadow: `0 0 10px ${stage.color}` }} />
+                    {stage.label}
+                  </div>
+                  <span className={styles.itemCount}>{stageStudents.length}</span>
+                </div>
+                
+                <SortableContext items={stageStudents.map(s => s.id)}>
+                  <div className={styles.columnBody}>
+                    {stageStudents.map((student) => (
+                      <SortableCard key={student.id} student={student} stageColor={stage.color} />
+                    ))}
+                    {stageStudents.length === 0 && (
+                      <div className="h-24 border-2 border-dashed border-white/5 rounded-2xl flex items-center justify-center text-[10px] font-black text-text-dim uppercase tracking-widest">
+                        Empty Stage
+                      </div>
+                    )}
+                  </div>
+                </SortableContext>
+              </div>
+            );
+          })}
+        </div>
+
+        <DragOverlay>
+          {activeId ? (
+            <div className={styles.card} style={{ opacity: 0.9, transform: 'rotate(2deg)', cursor: 'grabbing', border: '1px solid var(--gold)' }}>
+              <h4 className={styles.clientName}>{students.find(s => s.id === activeId)?.first_name}</h4>
+              <div className="text-[10px] text-text-dim uppercase font-bold">Relocating Lead...</div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+      )}
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
+import FlagIcon from '@/components/ui/FlagIcon';
 import { isSuperAdmin } from '@/lib/permissions';
 import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
@@ -81,6 +83,13 @@ export default function StudentProfile({ params }) {
 
   const fullName = `${student.last_name} ${student.first_name}`;
   const initials = `${student.first_name?.charAt(0)}${student.last_name?.charAt(0)}`.toUpperCase();
+  const activeStageIndex = PIPELINE_STAGES.findIndex((stage) => stage.key === student.pipeline_status);
+  const summaryMetrics = [
+    { label: 'Current Stage', value: PIPELINE_STAGES.find((stage) => stage.key === student.pipeline_status)?.label || 'Lead' },
+    { label: 'Office', value: student.offices?.name || 'Unassigned' },
+    { label: 'Destination', value: student.destinations?.country_name || 'Pending' },
+    { label: 'Assigned To', value: student.users?.full_name || 'Unassigned' },
+  ];
 
   const handleExportZip = async () => {
     try {
@@ -141,52 +150,55 @@ export default function StudentProfile({ params }) {
 
   return (
     <div>
-      {/* Profile Header */}
-      <div className="card mb-24" style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap' }}>
-        <div className="avatar avatar-lg" style={{ width: '80px', height: '80px', fontSize: '1.8rem', borderRadius: '12px', flexShrink: 0, overflow: 'hidden', background: 'var(--color-gold-muted)', color: 'var(--color-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', border: '2px solid var(--color-white-10)' }}>
-          {photoUrl ? <img src={photoUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
-        </div>
-        <div style={{ flex: 1 }}>
-          <div className="flex-between" style={{ flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-white)', marginBottom: '4px' }}>{fullName}</h1>
-              <p className="text-muted text-sm">{student.email} {student.phone ? `• ${student.phone}` : ''}</p>
-            </div>
-            <div className="flex gap-12">
-              <StatusChanger student={student} onChanged={() => window.location.reload()} />
-              <button className="btn btn-secondary btn-sm" onClick={handleExportZip}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Export Zip
-              </button>
-            </div>
+      <ExecutiveHero
+        eyebrow="Student 360 Profile"
+        title={fullName}
+        subtitle={`${student.email || 'No email'} ${student.phone ? `• ${student.phone}` : ''}`}
+        actions={
+          <>
+            <StatusChanger student={student} onChanged={() => window.location.reload()} />
+            <button className="btn btn-secondary btn-sm" onClick={handleExportZip}>Export Zip</button>
+          </>
+        }
+      >
+        <div className="flex gap-3 items-center mt-4 flex-wrap">
+          <div className="avatar avatar-xl">
+            {photoUrl ? <img src={photoUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
           </div>
-          <div className="flex gap-12 mt-16" style={{ flexWrap: 'wrap' }}>
-            {student.destinations && (
-              <span className="badge badge-info">
-                {student.destinations.flag_emoji} {student.destinations.country_name}
-              </span>
-            )}
-            {student.priority && (
-              <span className={`badge ${student.priority === 'high' ? 'badge-danger' : student.priority === 'medium' ? 'badge-warning' : 'badge-muted'}`}>
-                {student.priority} priority
-              </span>
-            )}
-            {student.lead_source && (
-              <span className="badge badge-muted">📥 {student.lead_source}</span>
-            )}
-            {student.offices && (
-              <span className="badge badge-muted">🏢 {student.offices.name}</span>
-            )}
-            {student.users && (
-              <span className="badge badge-muted">👤 {student.users.full_name}</span>
-            )}
-          </div>
+          {student.destinations && (
+            <span className="badge badge-info">
+              <FlagIcon destination={student.destinations} size="sm" />
+              {student.destinations.country_name}
+            </span>
+          )}
+          {student.priority && (
+            <span className={`badge ${student.priority === 'high' ? 'badge-danger' : student.priority === 'medium' ? 'badge-warning' : 'badge-muted'}`}>
+              {student.priority} priority
+            </span>
+          )}
+          {student.lead_source && <span className="badge badge-muted">{student.lead_source}</span>}
         </div>
-      </div>
+      </ExecutiveHero>
+
+      <ExecutiveSection title="Student Summary" subtitle="Core ownership and progression details for this profile.">
+        <MetricGrid items={summaryMetrics} />
+      </ExecutiveSection>
+
+      <ExecutiveSection title="Application Timeline" subtitle="Current student progress from lead capture to enrollment.">
+        <div className="status-timeline">
+          {PIPELINE_STAGES.filter((stage) => !['rejected', 'deferred'].includes(stage.key)).map((stage, index) => (
+            <div
+              key={stage.key}
+              className={`status-step ${index < activeStageIndex ? 'done' : ''} ${stage.key === student.pipeline_status ? 'active' : ''}`}
+            >
+              <span className="status-step__label">{stage.label}</span>
+              <span className="status-step__meta">
+                {stage.key === student.pipeline_status ? 'Current stage' : index < activeStageIndex ? 'Completed' : 'Pending'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </ExecutiveSection>
 
       {/* Tabs */}
       <div className="tabs">
@@ -305,6 +317,7 @@ function OverviewTab({ student }) {
   ];
 
   return (
+    <ExecutiveSection title="Master Record" subtitle="Academic, personal, and target-study information in one place.">
     <div className="grid-2" style={{ gap: '16px' }}>
       {sections.map(section => (
         <div key={section.title} className="card">
@@ -320,6 +333,7 @@ function OverviewTab({ student }) {
         </div>
       ))}
     </div>
+    </ExecutiveSection>
   );
 }
 

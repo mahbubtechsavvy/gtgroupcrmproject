@@ -1,6 +1,7 @@
 // Email Router Utility
 // Routes emails to appropriate account based on event type and policies (Phase 5)
-import { supabase } from './supabase';
+import { getSupabaseClient } from './supabase';
+const supabase = getSupabaseClient();
 import { selectEmailAccountUsingPolicy } from './emailPolicies';
 
 /**

@@ -1,0 +1,163 @@
+# GT Group CRM v2.0 — Master Redesign & Integration Plan
+> **Unified Platform | One Database | Three Sub-Websites | Premium Glass UI**
+> Updated: 2026-04-27
+
+---
+
+## 🏢 COMPANY STRUCTURE
+
+```
+GT Group (Main Company)
+├── GT Group Study Abroad Consultancy  
+└── GT Group Nexus Digital             
+
+Offices: 🇰🇷 South Korea | 🇧🇩 Bangladesh | 🇻🇳 Vietnam | 🇱🇰 Sri Lanka
+```
+
+---
+
+## 🎨 OFFICIAL BRAND COLORS
+
+| Role | Hex | Usage |
+|------|-----|-------|
+| **Primary Gold** | `#EFB748` | Main accent, buttons, active states |
+| **Light Gold** | `#F1DA7C` | Highlights, hover states, text accents |
+| **Deep Gold** | `#E6BC32` | Borders, KPI top bars |
+| **Dark / Black** | `#181A19` | Dark background, sidebar |
+| **Charcoal** | `#3F434C` | Surface cards, secondary bg |
+| **White** | `#FFFFFF` | Text on dark, light mode bg |
+
+**Typography:**
+- Display / H1-H2: `Outfit` 700-800 (bold, modern)
+- UI Labels: `Inter` 500-600
+- Body: `Inter` 400
+
+---
+
+## 🗄️ MASTER DATABASE ARCHITECTURE
+
+### One Supabase Instance — Both Projects Read/Write It
+
+```
+Supabase (single project)
+├── CRM Tables (staff, students, leads, tasks, events…)
+├── Website CMS Tables (news_posts, events, website_courses, nexus_portfolio…)
+├── Shared Tables (offices, users, notifications, app_settings)
+└── Auth (single auth system, role-based access)
+```
+
+**Staff Tagging (`users` table update required):**
+- Add `company_affiliation` column to track if a staff member works for:
+  - `GT Group` (Main)
+  - `Study Abroad`
+  - `Nexus Digital`
+  - `All` (can work across multiple)
+
+**Separated Pipelines:**
+- `students` table → For Study Abroad Prospective Students.
+- `b2b_clients` table (New) → For Nexus Digital Clients.
+
+---
+
+## 🌐 WHAT CRM MANAGES (Full Control)
+
+### 1. "GT Website" Management (New Grouping)
+The CRM sidebar will have a dedicated section for "GT Websites" with three sub-sections/buttons to manage each website independently:
+
+**A. GT Main Company**
+- Global News & Press Releases
+- Global Staff/Board Profiles
+- Investor Relations / General Info
+
+**B. GT Group Nexus Digital**
+- Nexus Services
+- Nexus Portfolio / Case Studies
+- B2B / B2C Client Testimonials
+- Nexus Contact Forms / Inquiries
+
+**C. GT Group Study Abroad**
+- Study Destinations
+- Partner Universities
+- Scholarships
+- Public Events
+- Academic Programs
+- Student Testimonials
+
+### 2. CRM Core Modules:
+| Professional Name | Technical Route | Purpose |
+|---|---|---|
+| Overview / Dashboard | `/dashboard` | Combined stats + separate tabs for Nexus & Study Abroad KPIs |
+| Prospective Students | `/students` | Pipeline for Study Abroad |
+| B2B/B2C Clients | `/clients` | Pipeline for Nexus Digital (To Be Built) |
+| Consultations | `/appointments` | Shared calendar |
+| Office Schedule | `/hr/schedule` | Global HR |
+| Corporate Contacts | `/contacts` | Shared Address Book |
+| Office Assets | `/inventory` | Global Inventory |
+| Visitor Log | `/visitors` | Global Reception |
+| Tasks & Meetings | `/tasks-events` | Internal workflows |
+| Reimbursements | `/expenses` | Finance |
+| Budgeting & Plans | `/expenditure` | Finance |
+| Reports & Analytics | `/reports` | Advanced Data visualization |
+| Social Media Hub | `/social-media` | Manages social posts for all companies |
+| Security Cameras | `/cctv` | Super Admin security |
+
+---
+
+## ✨ TRANSPARENT GLASS UI DESIGN SPEC
+
+### Glassmorphism Token Standard (v2.0)
+```css
+/* Premium Glass Card */
+background: linear-gradient(135deg,
+  rgba(239,183,72,0.06) 0%,
+  rgba(255,255,255,0.04) 100%);
+backdrop-filter: blur(24px) saturate(180%);
+border: 1px solid rgba(239,183,72,0.15);
+box-shadow:
+  0 8px 32px rgba(0,0,0,0.4),
+  inset 0 1px 0 rgba(255,255,255,0.08);
+```
+
+### Theme Logic
+- **Default:** Automatically detects user's system preferences (`prefers-color-scheme`).
+- **Dark Mode:** Background `#0F1110`, Surface `#161918`, Official Gold accents.
+- **Light Mode:** Background `#F7F3EC`, Surface `#FFFFFF`, Gold gradients.
+
+---
+
+## 🚀 IMPLEMENTATION PHASES
+
+### ✅ Phase 0 — Bug Fixes (DONE)
+- [x] Fix all broken supabase imports (16 files)
+- [x] Fix all wrong table names
+
+### ✅ Phase 1 — UI / UX Redesign Foundation (DONE)
+- [x] globals.css v2.0 with dark/light tokens
+- [x] ThemeToggle respects system preference initially.
+- [x] AppLayout with mobile sidebar logic
+- [x] Sidebar.module.css v2.0 with professional naming conventions
+
+### ✅ Phase 2 — Brand Color Update (DONE)
+- [x] Apply exact GT Group palette (#EFB748, #E6BC32, #181A19, #3F434C)
+- [x] Update CRM project CSS variables
+- [x] Update Web project Shared UI tokens
+- [x] Premium transparent glassmorphism activated
+
+### 🔲 Phase 3 — Database & Schema Updates (NEXT STEP)
+- [ ] Add `company_affiliation` to `users` and `team_members` tables.
+- [ ] Create database tables for Nexus Digital (e.g., `nexus_services`, `nexus_portfolio`, `nexus_clients`).
+- [ ] Update RLS policies for Super Admin access across all domains.
+
+### 🔲 Phase 4 — Dashboard & Pipeline Enhancement
+- [ ] Build Super Admin Dashboard with combined + isolated KPIs.
+- [ ] Build separate Pipeline UI for "B2B/B2C Clients" (Nexus).
+- [ ] Reorganize Sidebar into the 3 "GT Website" management buckets.
+
+---
+
+## ✅ SUCCESS CRITERIA
+- One Supabase DB feeds all three websites.
+- CRM edits appear on public websites in real-time.
+- Staff correctly attributed to their respective companies.
+- Pipelines operate independently without data bleed.
+- Dashboard provides full executive visibility.

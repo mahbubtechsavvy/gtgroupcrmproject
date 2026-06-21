@@ -1,0 +1,194 @@
+# GT Group CRM v2.0 — Master Redesign & Integration Plan
+> **Unified Platform | One Database | Two Sub-Companies | Premium Glass UI**
+> Updated: 2026-04-27
+
+---
+
+## 🏢 COMPANY STRUCTURE
+
+```
+GT Group (Main Company)
+├── GT Group Study Abroad Consultancy  ← primary CRM client
+│   └── Website: gtgroupwebproject
+└── GT Group Nexus Digital             ← managed via CRM
+    └── (digital services division)
+
+Offices: 🇰🇷 South Korea | 🇧🇩 Bangladesh | 🇻🇳 Vietnam | 🇱🇰 Sri Lanka
+```
+
+---
+
+## 🎨 OFFICIAL BRAND COLORS
+
+| Role | Hex | Usage |
+|------|-----|-------|
+| **Primary Gold** | `#EFB748` | Main accent, buttons, active states |
+| **Light Gold** | `#F1DA7C` | Highlights, hover states, text accents |
+| **Deep Gold** | `#E6BC32` | Borders, KPI top bars |
+| **Dark / Black** | `#181A19` | Dark background, sidebar |
+| **Charcoal** | `#3F434C` | Surface cards, secondary bg |
+| **White** | `#FFFFFF` | Text on dark, light mode bg |
+
+**Typography:**
+- Display / H1-H2: `Outfit` 700-800 (bold, modern)
+- UI Labels: `Inter` 500-600
+- Body: `Inter` 400
+
+---
+
+## 🗄️ MASTER DATABASE ARCHITECTURE
+
+### One Supabase Instance — Both Projects Read/Write It
+
+```
+Supabase (single project)
+├── CRM Tables (staff, students, leads, tasks, events…)
+├── Website CMS Tables (news_posts, events, website_courses…)
+├── Shared Tables (offices, users, notifications, app_settings)
+└── Auth (single auth system, role-based access)
+```
+
+**CRM Project** (`gtgroupcrmproject`) — Admin interface:
+- CRUD on ALL tables
+- Manages website content (CMS module)
+- Manages staff, leads, HR, finance
+
+**Web Project** (`gtgroupwebproject`) — Public face:
+- READ-ONLY from website CMS tables
+- Realtime subscriptions for live updates
+- No auth required for public pages
+
+### Environment Variables (Both Projects)
+```env
+NEXT_PUBLIC_SUPABASE_URL=<same value>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<same value>
+```
+
+---
+
+## 🌐 WHAT CRM MANAGES (Full Control)
+
+### For Study Abroad Consultancy Website:
+| CMS Module | DB Table | CRM Page |
+|---|---|---|
+| News & Blog | `news_posts` | `/website/news` |
+| Events | `events` | `/website/events` |
+| Courses | `website_courses` | `/website/courses` |
+| Destinations | `web_destinations` | `/website/destinations` |
+| Universities | `web_universities` | `/website/universities` |
+| Scholarships | `web_scholarships` | `/website/scholarships` |
+| Testimonials | `testimonials` | `/website/testimonials` |
+| Team Profiles | `team_members` | `/website/team` |
+| Partners | `web_partners` | `/website/partners` |
+| FAQs | `web_faqs` | `/website/faqs` |
+| Subscribers | `newsletter_subscribers` | `/website/subscribers` |
+| Applications | `applications` | `/website/applications` |
+| Success Stories | `success_stories` | `/website/success-stories` |
+
+### CRM Core Modules:
+| Module | Purpose |
+|---|---|
+| Dashboard | Live KPIs for both sub-companies |
+| Students / Leads | Lead pipeline, conversion funnel |
+| HR Work Schedule | Staff shifts, attendance |
+| Corporate Contacts | B2B contacts (partners, embassies) |
+| Tasks & Events | Company calendar |
+| Expense Reports | Finance tracking |
+| Global Broadcast | Email newsletters |
+| CCTV Monitor | Super admin security |
+| Settings | App config, brand colors, offices |
+
+---
+
+## ✨ TRANSPARENT GLASS UI DESIGN SPEC
+
+### Glassmorphism Token Standard (v2.0)
+```css
+/* Premium Glass Card */
+background: linear-gradient(135deg,
+  rgba(239,183,72,0.06) 0%,
+  rgba(255,255,255,0.04) 100%);
+backdrop-filter: blur(24px) saturate(180%);
+border: 1px solid rgba(239,183,72,0.15);
+box-shadow:
+  0 8px 32px rgba(0,0,0,0.4),
+  inset 0 1px 0 rgba(255,255,255,0.08);
+```
+
+### Dark Mode (Default)
+- Background: `#0C0E10` (deeper than before — near-black)
+- Surface 1: `#121618` with glass overlay
+- Surface 2: `#181A19` (brand dark)
+- Sidebar: Frosted glass on brand dark
+
+### Light Mode
+- Background: `#F5F0E8` (warm off-white matching gold brand)
+- Surface 1: `rgba(255,255,255,0.75)` glass
+- Sidebar: `rgba(255,255,255,0.85)` glass
+
+### Gold Glow Effects
+```css
+/* Active nav item glow */
+box-shadow: 0 0 20px rgba(239,183,72,0.2), inset 0 0 20px rgba(239,183,72,0.05);
+
+/* Button hover */
+box-shadow: 0 4px 20px rgba(239,183,72,0.4);
+```
+
+---
+
+## 📱 RESPONSIVE STRATEGY
+
+| Screen | Layout |
+|---|---|
+| ≥ 1440px | Full sidebar 272px, content fluid |
+| 1024–1439px | Sidebar icon-only 72px (auto-collapse) |
+| 768–1023px | Hidden sidebar, hamburger top-left |
+| < 768px | Mobile: bottom nav + slide drawer |
+
+---
+
+## 🚀 IMPLEMENTATION PHASES
+
+### ✅ Phase 0 — Bug Fixes (DONE)
+- [x] Remove duplicate Courses nav entry
+- [x] Rename Contact Network → Corporate Contacts
+- [x] Fix all broken supabase imports (16 files)
+- [x] Fix all wrong table names
+
+### ✅ Phase 1 — Design System (DONE)
+- [x] globals.css v2.0 with dark/light tokens
+- [x] ThemeToggle component
+- [x] AppLayout with mobile sidebar
+- [x] Sidebar.module.css v2.0
+
+### 🔄 Phase 2 — Brand Color Update (IN PROGRESS)
+- [ ] Apply exact GT Group palette (#EFB748, #E6BC32, #181A19, #3F434C)
+- [ ] Update both CRM and Web project CSS
+- [ ] Glassmorphism gold-tinted cards
+
+### 🔲 Phase 3 — Web Project Sync
+- [ ] Verify Web project uses same Supabase env vars
+- [ ] Add realtime subscriptions in Web for live CMS updates
+- [ ] Ensure web pages read from correct tables
+
+### 🔲 Phase 4 — Dashboard Enhancement
+- [ ] Multi-company KPI panel (Study Abroad vs Nexus Digital)
+- [ ] Office performance breakdown (🇰🇷🇧🇩🇻🇳🇱🇰)
+- [ ] Real-time lead conversion funnel chart
+
+### 🔲 Phase 5 — Production Deploy
+- [ ] Git commit all changes
+- [ ] Vercel deploy CRM
+- [ ] Vercel deploy Web project
+- [ ] Set same Supabase env vars on both Vercel projects
+
+---
+
+## ✅ SUCCESS CRITERIA
+- One Supabase DB feeds both websites
+- CRM edits appear on public website in real-time
+- All GT Group brand colors applied correctly
+- Build passes 0 errors on both projects
+- Works on mobile (375px) and desktop (1440px+)
+- Dark/Light mode persists across sessions

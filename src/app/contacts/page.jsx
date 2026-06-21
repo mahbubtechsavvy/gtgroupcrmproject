@@ -1,286 +1,188 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Plus, 
-  Linkedin, 
-  Facebook, 
-  Instagram, 
-  Twitter as XIcon, 
-  MessageSquare,
-  Briefcase,
-  FileDown
-} from 'lucide-react';
-import { getSupabaseClient } from '@/lib/supabase';
-import { isSuperAdmin } from '@/lib/auth';
-import * as XLSX from 'xlsx';
+import { useState, useEffect } from 'react';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
+import { useUser } from '@/components/layout/AppLayout';
+import { Search, Plus } from 'lucide-react';
 import styles from './contacts.module.css';
 
 export default function ContactNetworkPage() {
+  const user = useUser();
   const [contacts, setContacts] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('all');
   const [showForm, setShowForm] = useState(false);
-  const [offices, setOffices] = useState([]);
-  
   const [form, setForm] = useState({
     full_name: '',
-    employee_id: '',
+    company_name: '',
     role: '',
-    office_id: '',
-    phone: '',
     email: '',
-    whatsapp: '',
+    phone: '',
+    country: '',
+    office_name: '',
     linkedin_url: '',
-    facebook_url: '',
-    instagram_url: '',
-    twitter_x_url: '',
-    nid_or_passport: '',
-    notes: ''
+    whatsapp: '',
+    notes: '',
   });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchContacts();
+  }, [category]);
 
-  const fetchData = async () => {
-    const supabase = getSupabaseClient();
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const { data: user } = await supabase.from('users').select('*').eq('id', session.user.id).single();
-      setCurrentUser(user);
+  const fetchContacts = async () => {
+    setLoading(true);
+    const officeId = user && !['ceo', 'coo', 'it_manager'].includes(user.role) ? user.office_id : '';
+    const response = await fetch(`/api/contacts${officeId ? `?officeId=${officeId}` : ''}`);
+    const data = await response.json();
+    const source = Array.isArray(data) ? data : [];
+    setContacts(category === 'all' ? source : source.filter((contact) => (contact.role || '').toLowerCase().includes(category)));
+    setLoading(false);
+  };
 
-      // Fetch Contacts
-      let query = supabase.from('contact_network').select('*, offices(name)');
-      if (user.role !== 'ceo' && user.role !== 'coo') {
-        query = query.eq('office_id', user.office_id);
-      }
-      const { data } = await query.order('full_name', { ascending: true });
-      setContacts(data || []);
-
-      // Fetch Offices for the form
-      const { data: offData } = await supabase.from('offices').select('id, name');
-      setOffices(offData || []);
-
-    } catch (err) {
-      console.error('Failed to fetch contacts:', err);
-    } finally {
-      setLoading(false);
+  const saveContact = async (event) => {
+    event.preventDefault();
+    const response = await fetch('/api/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...form,
+        office_id: user?.office_id || null,
+        created_by: user?.id || null,
+      }),
+    });
+    if (!response.ok) {
+      alert('Unable to save contact entry.');
+      return;
     }
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('/api/contacts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...form,
-          created_by: currentUser.id,
-          // If not super admin, force their own office ID
-          office_id: (currentUser.role === 'ceo' || currentUser.role === 'coo') ? form.office_id : currentUser.office_id
-        })
-      });
-      if (res.ok) {
-        setShowForm(false);
-        setForm({
-          full_name: '', employee_id: '', role: '', office_id: '', phone: '', email: '', whatsapp: '',
-          linkedin_url: '', facebook_url: '', instagram_url: '', twitter_x_url: '', nid_or_passport: '', notes: ''
-        });
-        fetchData();
-      }
-    } catch (err) { alert('Failed to save contact'); }
-  };
-
-  const exportToExcel = (dataToExport, fileName = 'GT_Group_Contacts') => {
-    const ws = XLSX.utils.json_to_sheet(dataToExport.map(c => ({
-      'Full Name': c.full_name,
-      'Employee ID': c.employee_id,
-      'Role': c.role,
-      'Office': c.offices?.name || 'Global',
-      'Email': c.email,
-      'Phone': c.phone,
-      'WhatsApp': c.whatsapp,
-      'NID/Passport': c.nid_or_passport,
-      'LinkedIn': c.linkedin_url,
-      'Notes': c.notes
-    })));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
+    setShowForm(false);
+    setForm({
+      full_name: '',
+      company_name: '',
+      role: '',
+      email: '',
+      phone: '',
+      country: '',
+      office_name: '',
+      linkedin_url: '',
+      whatsapp: '',
+      notes: '',
+    });
+    fetchContacts();
   };
 
   const filteredContacts = contacts.filter(c => 
-    c.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.employee_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.role?.toLowerCase().includes(searchQuery.toLowerCase())
+    c.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.company_name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <div className="empty-state">Loading Contact Network...</div>;
+  const metrics = [
+    { label: 'Total Contacts', value: contacts.length },
+    { label: 'Partners', value: contacts.filter((contact) => (contact.role || '').toLowerCase().includes('partner')).length },
+    { label: 'Vendors', value: contacts.filter((contact) => (contact.role || '').toLowerCase().includes('vendor')).length },
+    { label: 'With WhatsApp', value: contacts.filter((contact) => contact.whatsapp).length },
+  ];
 
   return (
     <div className={styles.container}>
-      <div className="flex-between mb-24">
-        <div>
-          <h1 className="page-title">GT Group Network</h1>
-          <p className="page-subtitle">Global Directory of Staff & Partners</p>
-        </div>
-        <div className="flex gap-12">
-          <div className="search-box" style={{ background: 'var(--color-surface)', display: 'flex', alignItems: 'center', padding: '0 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-             <Search size={16} className="text-muted" />
-             <input 
-               style={{ background: 'transparent', border: 'none', padding: '10px', color: 'white', outline: 'none' }}
-               placeholder="Search name, ID, or role..."
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-             />
-          </div>
-          <button className="btn btn-secondary" onClick={() => exportToExcel(filteredContacts)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FileDown size={18} /> Export Results
-          </button>
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-            <Plus size={18} /> Add Contact
-          </button>
-        </div>
-      </div>
+      <ExecutiveHero
+        eyebrow="Relationship Intelligence"
+        title="Contact Network"
+        subtitle="Company, office, and partner relationship tracking with working add-entry flow and faster supervision."
+        actions={<button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={16} /> Add Entry</button>}
+      />
 
-      <div className={styles.grid}>
-        {filteredContacts.map(contact => (
-          <div key={contact.id} className={styles.card}>
-            <div className={styles.cover}>
-              <div className={styles.avatar}>
-                {contact.photo_url ? (
-                  <img src={contact.photo_url} alt={contact.full_name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                ) : (
-                  contact.full_name.charAt(0)
-                )}
-              </div>
-              <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
-                 <span className="badge badge-gold" style={{ fontFamily: 'monospace' }}>{contact.employee_id || 'EXT-PARTNER'}</span>
-              </div>
-            </div>
-            <div className={styles.body}>
-              <div className={styles.name}>{contact.full_name}</div>
-              <div className={styles.role}>{contact.role || 'Staff Member'}</div>
-              
-              <div className={styles.info}>
-                <div className={styles.infoItem} title="Office/Location">
-                  <Briefcase size={14} color="var(--color-gold)" /> {contact.company_name || contact.offices?.name || 'GT Group Global'}
-                </div>
-                {contact.email && (
-                  <div className={styles.infoItem}>
-                    <Mail size={14} color="var(--color-gold)" /> <a href={`mailto:${contact.email}`} className="text-muted">{contact.email}</a>
-                  </div>
-                )}
-                {contact.phone && (
-                  <div className={styles.infoItem}>
-                    <Phone size={14} color="var(--color-gold)" /> {contact.phone}
-                  </div>
-                )}
-              </div>
+      <ExecutiveSection title="Network Summary">
+        <MetricGrid items={metrics} />
+      </ExecutiveSection>
 
-              <div className={styles.socials}>
-                {contact.whatsapp && <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" title="WhatsApp" className={styles.socialLink}><MessageSquare size={16} /></a>}
-                {contact.linkedin_url && <a href={contact.linkedin_url} target="_blank" rel="noreferrer" title="LinkedIn" className={styles.socialLink}><Linkedin size={16} /></a>}
-                {contact.facebook_url && <a href={contact.facebook_url} target="_blank" rel="noreferrer" title="Facebook" className={styles.socialLink}><Facebook size={16} /></a>}
-                {contact.instagram_url && <a href={contact.instagram_url} target="_blank" rel="noreferrer" title="Instagram" className={styles.socialLink}><Instagram size={16} /></a>}
-                {contact.twitter_x_url && <a href={contact.twitter_x_url} target="_blank" rel="noreferrer" title="X (Twitter)" className={styles.socialLink}><XIcon size={16} /></a>}
-              </div>
-            </div>
+      {/* Filter Bar */}
+      <ExecutiveSection title="Directory">
+        <div className="search-filter-bar mb-10">
+          <div className="search-input-wrapper">
+            <Search size={16} />
+            <input className="form-input" placeholder="Search the network..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-        ))}
-      </div>
+          <select className="form-select" style={{ width: '220px' }} value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="all">All Contacts</option>
+            <option value="partner">Partners</option>
+            <option value="vendor">Vendors</option>
+            <option value="legal">Legal</option>
+            <option value="government">Government</option>
+          </select>
+        </div>
+
+      {loading ? (
+        <div className="flex justify-center p-20"><div className="loading-spinner" /></div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Office / Country</th>
+                <th>Contact</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+          {filteredContacts.map((contact) => (
+            <tr key={contact.id}>
+              <td><strong>{contact.full_name}</strong></td>
+              <td>{contact.company_name || '—'}</td>
+              <td>{contact.role || '—'}</td>
+              <td>{contact.office_name || 'Global'} {contact.country ? `• ${contact.country}` : ''}</td>
+              <td>
+                <div>{contact.email || '—'}</div>
+                <div className="text-xs text-muted">{contact.phone || contact.whatsapp || 'No number'}</div>
+              </td>
+              <td className="text-sm text-muted">{contact.notes || '—'}</td>
+            </tr>
+          ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      </ExecutiveSection>
+
+      {!loading && filteredContacts.length === 0 && (
+        <div className="text-center p-20 glass rounded-[40px] border border-dashed border-white/5">
+           <h3 className="text-2xl font-black text-white">Node Not Found</h3>
+           <p className="text-text-dim max-w-xs mx-auto mt-2">We couldn&apos;t find any contact matching your parameters in the global network.</p>
+        </div>
+      )}
 
       {showForm && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowForm(false)}>
-           <div className="modal" style={{ maxWidth: '800px' }}>
-              <div className="modal-header"><h2>Add Corporate Contact</h2></div>
-              <form onSubmit={handleSave}>
-                <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                      <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                         <label className="form-label">Full Name *</label>
-                         <input className="form-input" required value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} placeholder="e.g. Mahbubur Rahman" />
-                      </div>
-                      
-                      <div className="form-group">
-                         <label className="form-label">Role / Designation *</label>
-                         <input className="form-input" required value={form.role} onChange={e => setForm({...form, role: e.target.value})} placeholder="e.g. Senior Counselor" />
-                      </div>
-
-                      <div className="form-group">
-                         <label className="form-label">Employee ID / Partner ID</label>
-                         <input className="form-input" value={form.employee_id} onChange={e => setForm({...form, employee_id: e.target.value})} placeholder="e.g. GT-829104" />
-                      </div>
-
-                      {(isSuperAdmin(currentUser?.role)) && (
-                        <div className="form-group">
-                           <label className="form-label">Office Assignment</label>
-                           <select className="form-select" value={form.office_id} onChange={e => setForm({...form, office_id: e.target.value})}>
-                              <option value="">Global / Head Office</option>
-                              {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                           </select>
-                        </div>
-                      )}
-
-                      <div className="form-group">
-                         <label className="form-label">NID / Passport Number (Private)</label>
-                         <input className="form-input" value={form.nid_or_passport} onChange={e => setForm({...form, nid_or_passport: e.target.value})} placeholder="e.g. A01928374" />
-                      </div>
-
-                      <div style={{ gridColumn: '1 / -1', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '1rem 0', paddingTop: '1rem' }}>
-                        <h3 className="text-gold font-bold mb-16">Contact & Social Media</h3>
-                      </div>
-
-                      <div className="form-group">
-                         <label className="form-label">Email Address</label>
-                         <input type="email" className="form-input" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="e.g. name@gtgroup.com" />
-                      </div>
-
-                      <div className="form-group">
-                         <label className="form-label">Phone Number</label>
-                         <input className="form-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="e.g. +880 1XXX-XXXXXX" />
-                      </div>
-
-                      <div className="form-group">
-                         <label className="form-label">WhatsApp Number</label>
-                         <input className="form-input" value={form.whatsapp} onChange={e => setForm({...form, whatsapp: e.target.value})} placeholder="e.g. +880 1XXX-XXXXXX" />
-                      </div>
-
-                      <div className="form-group">
-                         <label className="form-label">LinkedIn Profile URL</label>
-                         <input type="url" className="form-input" value={form.linkedin_url} onChange={e => setForm({...form, linkedin_url: e.target.value})} placeholder="e.g. https://linkedin.com/in/username" />
-                      </div>
-
-                      <div className="form-group">
-                         <label className="form-label">Facebook Profile URL</label>
-                         <input type="url" className="form-input" value={form.facebook_url} onChange={e => setForm({...form, facebook_url: e.target.value})} placeholder="e.g. https://facebook.com/username" />
-                      </div>
-
-                      <div className="form-group">
-                         <label className="form-label">Instagram URL</label>
-                         <input type="url" className="form-input" value={form.instagram_url} onChange={e => setForm({...form, instagram_url: e.target.value})} placeholder="e.g. https://instagram.com/username" />
-                      </div>
-
-                      <div className="form-group">
-                         <label className="form-label">X (Twitter) URL</label>
-                         <input type="url" className="form-input" value={form.twitter_x_url} onChange={e => setForm({...form, twitter_x_url: e.target.value})} placeholder="e.g. https://x.com/username" />
-                      </div>
-                   </div>
+        <div className="modal-overlay" onClick={(event) => event.target === event.currentTarget && setShowForm(false)}>
+          <div className="modal">
+            <div className="modal-header">
+              <h2 className="modal-title">Add Contact Entry</h2>
+              <button className="modal-close" onClick={() => setShowForm(false)}>x</button>
+            </div>
+            <form onSubmit={saveContact}>
+              <div className="modal-body">
+                <div className="grid-2">
+                  <div className="form-group"><label className="form-label">Full Name</label><input className="form-input" required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">Company</label><input className="form-input" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">Role</label><input className="form-input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">Email</label><input className="form-input" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">Phone</label><input className="form-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">WhatsApp</label><input className="form-input" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">Country</label><input className="form-input" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">Office Name</label><input className="form-input" value={form.office_name} onChange={(e) => setForm({ ...form, office_name: e.target.value })} /></div>
                 </div>
-                <div className="modal-footer">
-                   <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-                   <button type="submit" className="btn btn-primary">Save Contact</button>
-                </div>
-              </form>
-           </div>
+                <div className="form-group mt-4"><label className="form-label">LinkedIn URL</label><input className="form-input" value={form.linkedin_url} onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })} /></div>
+                <div className="form-group mt-4"><label className="form-label">Notes</label><textarea className="form-textarea" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Save Contact</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

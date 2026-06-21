@@ -1,8 +1,9 @@
 // API Route: Validate Google OAuth Token
 // POST /api/google-validate-token
-import { supabase } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request) {
+  const supabase = createServerSupabaseClient();
   try {
     const { emailAccountId } = await request.json();
 

@@ -1,8 +1,9 @@
 // API Route: Send email via Gmail
 // POST /api/gmail-send
-import { supabase } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request) {
+  const supabase = createServerSupabaseClient();
   try {
     const { emailAccountId, emailData } = await request.json();
 

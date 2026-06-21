@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getSupabaseClient } from '@/lib/supabase';
+import ChatPreferences from './ChatPreferences';
 
 export default function GeneralSettings() {
   const [settings, setSettings] = useState({
@@ -15,7 +16,10 @@ export default function GeneralSettings() {
     login_page_company_name: 'GT Group',
     login_page_company_slogan: 'Study Abroad Consultancy',
     login_page_background_primary_color: '#0F2542',
-    login_page_background_secondary_color: '#1A3F5C'
+    login_page_background_secondary_color: '#1A3F5C',
+    site_url_main: 'http://localhost:3000',
+    site_url_study_abroad: 'http://localhost:3001',
+    site_url_nexus: 'http://localhost:3002'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -224,7 +228,49 @@ export default function GeneralSettings() {
               />
               <p className="text-xs text-muted mt-8">Tagline displayed below company name on login page.</p>
             </div>
+          </div>
 
+          <div className="card">
+            <h3 className="section-title mb-24">🌐 Production Website Connectivity</h3>
+            <p className="text-sm text-muted mb-24">Configure the live URLs for your global web presence. These links connect the CRM to your public-facing portals.</p>
+            
+            <div className="space-y-20">
+              <div className="form-group">
+                <label className="form-label">Main Group Website (GT Group)</label>
+                <input 
+                  className="form-input" 
+                  value={settings.site_url_main} 
+                  onChange={e => handleChange('site_url_main', e.target.value)} 
+                  placeholder="https://gtgroup.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Study Abroad Portal</label>
+                <input 
+                  className="form-input" 
+                  value={settings.site_url_study_abroad} 
+                  onChange={e => handleChange('site_url_study_abroad', e.target.value)} 
+                  placeholder="https://study.gtgroup.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Nexus Digital Agency</label>
+                <input 
+                  className="form-input" 
+                  value={settings.site_url_nexus} 
+                  onChange={e => handleChange('site_url_nexus', e.target.value)} 
+                  placeholder="https://nexus.gtgroup.com"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <h3 className="section-title mb-24">💬 Chat & Collaboration Preferences</h3>
+            <p className="text-sm text-muted mb-24">Customize your real-time communication experience, AI translation, and notification behaviors.</p>
+            <ChatPreferences />
           </div>
         </div>
 

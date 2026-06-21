@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import { 
   Clock, 
   MapPin, 
@@ -115,34 +116,21 @@ export default function HRAttendancePage() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.title}>
-          <h1>Work Schedule</h1>
-          <p>{currentUser?.offices?.name} Office • Staff Attendance & HR Portal</p>
-        </div>
-        <div className={styles.timer}>{time}</div>
-      </div>
+      <ExecutiveHero
+        eyebrow="Office Workforce"
+        title="Work Schedule"
+        subtitle={`${currentUser?.offices?.name || 'Office'} attendance, check-in history, and daily workforce control with clearer records for every staff member.`}
+        actions={<div className={styles.timer}>{time}</div>}
+      />
 
-      {/* Stats Grid */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <h3>Monthly Working Days</h3>
-          <div className={styles.value}>{officeStats.totalWorkingDays}</div>
-        </div>
-        <div className={styles.statCard}>
-          <h3>Total Present Today</h3>
-          <div className={styles.value}>{officeStats.present}</div>
-        </div>
-        <div className={styles.statCard}>
-          <h3>Late Arrivals</h3>
-          <div className={styles.value} style={{ color: '#eab308' }}>{officeStats.late}</div>
-        </div>
-        <div className={styles.statCard}>
-          <h3>Office Overtime (Hrs)</h3>
-          <div className={styles.value} style={{ color: '#22c55e' }}>{officeStats.overtime}</div>
-        </div>
-      </div>
+      <ExecutiveSection title="Attendance Summary">
+        <MetricGrid items={[
+          { label: 'Working Days', value: officeStats.totalWorkingDays },
+          { label: 'Present Today', value: officeStats.present },
+          { label: 'Late Arrivals', value: officeStats.late },
+          { label: 'Overtime Hours', value: officeStats.overtime },
+        ]} />
+      </ExecutiveSection>
 
       {/* Control Panel */}
       <div className={styles.controlPanel}>
@@ -161,7 +149,7 @@ export default function HRAttendancePage() {
             </div>
           </div>
           <div style={{ width: '300px' }}>
-             <p className="text-xs text-muted mb-4">NOTES (EXAMPLE: "Completed paperwork for Student 204")</p>
+             <p className="text-xs text-muted mb-4">NOTES (EXAMPLE: &quot;Completed paperwork for Student 204&quot;)</p>
              <input 
                className="form-input" 
                placeholder="e.g. Started documentation for Student 102" 
@@ -190,9 +178,10 @@ export default function HRAttendancePage() {
       </div>
 
       {/* Attendance List */}
+      <ExecutiveSection title="Work History Records" subtitle="Daily staff check-in, check-out, status, and notes in a clearer audit-style list.">
       <div className={styles.attendanceList}>
         <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-           <h3 className="font-bold">Today's Attendance Log ({new Date().toDateString()})</h3>
+           <h3 className="font-bold">Today&apos;s Attendance Log ({new Date().toDateString()})</h3>
            <div className="flex gap-12">
               <Search size={18} className="text-muted" />
               <Filter size={18} className="text-muted" />
@@ -246,6 +235,7 @@ export default function HRAttendancePage() {
           </tbody>
         </table>
       </div>
+      </ExecutiveSection>
     </div>
   );
 }

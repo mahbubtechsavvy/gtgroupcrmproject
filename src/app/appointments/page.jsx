@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import { isSuperAdmin } from '@/lib/permissions';
+import FlagIcon from '@/components/ui/FlagIcon';
 import styles from './appointments.module.css';
 
 const APPOINTMENT_TYPES = [
@@ -43,7 +45,7 @@ export default function AppointmentsPage() {
       const { data: st } = await supabase.from('students').select('*').order('first_name').limit(200);
       setStudents(st || []);
 
-      const { data: off } = await supabase.from('offices').select('id, name');
+      const { data: off } = await supabase.from('offices').select('id, name, country');
       setOffices(off || []);
       if (!isSuperAdmin(u?.role)) setFilterOffice(u.office_id);
 
@@ -94,6 +96,15 @@ export default function AppointmentsPage() {
   const todayAppts = appointments.filter(a => a.scheduled_at?.startsWith(today) && a.status === 'scheduled');
   const upcoming = appointments.filter(a => a.scheduled_at > new Date().toISOString() && a.status === 'scheduled');
   const overdue = appointments.filter(a => a.scheduled_at < new Date().toISOString() && a.status === 'scheduled');
+  const officeSummary = offices.map((office) => {
+    const officeAppointments = appointments.filter((appointment) => appointment.office_id === office.id);
+    return {
+      id: office.id,
+      name: office.name,
+      pending: officeAppointments.filter((appointment) => appointment.status === 'scheduled').length,
+      completed: officeAppointments.filter((appointment) => appointment.status === 'completed').length,
+    };
+  }).filter((office) => office.pending || office.completed);
 
   const formatDateTime = (dt) => {
     const d = new Date(dt);
@@ -108,79 +119,49 @@ export default function AppointmentsPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex-between mb-24" style={{ flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 className="page-title">Appointments</h1>
-          <p className="page-subtitle">Schedule and track student consultations</p>
-        </div>
-        <div className="flex gap-12">
-          {/* View Toggle */}
-          <div className="flex-center" style={{ background: 'var(--color-surface)', borderRadius: '12px', padding: '4px' }}>
-            <button
-              className={`btn btn-sm ${viewMode === 'calendar' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setViewMode('calendar')}
-              style={{ borderRadius: '8px', padding: '6px 12px' }}
-            >
-              📅 Calendar
-            </button>
-            <button
-              className={`btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setViewMode('list')}
-              style={{ borderRadius: '8px', padding: '6px 12px' }}
-            >
-              ☰ List
-            </button>
-          </div>
-          <button className="btn btn-primary" onClick={() => { setEditAppt(null); setShowForm(true); }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Schedule Appointment
-          </button>
-        </div>
-      </div>
+      <ExecutiveHero
+        eyebrow="Consultation Command"
+        title="Appointments"
+        subtitle="Pending and completed consultation visibility for every office, with student context and counselor ownership."
+        actions={
+          <>
+            <div className="flex-center" style={{ background: 'var(--surface-1)', borderRadius: '12px', padding: '4px' }}>
+              <button className={`btn btn-sm ${viewMode === 'calendar' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('calendar')}>Calendar</button>
+              <button className={`btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('list')}>List</button>
+            </div>
+            <button className="btn btn-primary" onClick={() => { setEditAppt(null); setShowForm(true); }}>Schedule Appointment</button>
+          </>
+        }
+      />
 
-      {/* Quick Stats */}
-      <div className="kpi-grid mb-24">
-        <div className="kpi-card">
-          <div className="kpi-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
+      <ExecutiveSection title="Consultation Summary" subtitle="Super admin office totals and meeting health indicators.">
+        <MetricGrid items={[
+          { label: 'Today', value: todayAppts.length },
+          { label: 'Upcoming', value: upcoming.length },
+          { label: 'Overdue', value: overdue.length },
+          { label: 'Completed', value: appointments.filter(a => a.status === 'completed').length },
+        ]} />
+      </ExecutiveSection>
+
+      {isSuperAdmin(user?.role) && officeSummary.length > 0 && (
+        <ExecutiveSection title="Office Summary" subtitle="Pending and completed consultation counts for each office.">
+          <div className="office-summary-grid">
+            {officeSummary.map((office) => (
+              <div key={office.id} className="office-summary-card">
+                <div className="office-summary-card__title">
+                  <FlagIcon countryName={offices.find((item) => item.id === office.id)?.country || office.name} size="sm" />
+                  <span>{office.name}</span>
+                </div>
+                <div className="office-summary-card__metrics">
+                  <div className="mini-stat"><strong>{office.pending}</strong><span>Pending</span></div>
+                  <div className="mini-stat"><strong>{office.completed}</strong><span>Completed</span></div>
+                  <div className="mini-stat"><strong>{office.pending + office.completed}</strong><span>Total</span></div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="kpi-value">{todayAppts.length}</div>
-          <div className="kpi-label">Today</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-icon" style={{ background: 'rgba(16,185,129,0.15)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-          </div>
-          <div className="kpi-value">{upcoming.length}</div>
-          <div className="kpi-label">Upcoming</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-icon" style={{ background: 'rgba(239,68,68,0.15)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-          </div>
-          <div className="kpi-value">{overdue.length}</div>
-          <div className="kpi-label">Overdue</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-icon" style={{ background: 'rgba(201,162,39,0.15)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0C040" strokeWidth="2">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </div>
-          <div className="kpi-value">{appointments.filter(a => a.status === 'completed').length}</div>
-          <div className="kpi-label">Completed</div>
-        </div>
-      </div>
+        </ExecutiveSection>
+      )}
 
       {/* Filters */}
       <div className="search-filter-bar mb-20">

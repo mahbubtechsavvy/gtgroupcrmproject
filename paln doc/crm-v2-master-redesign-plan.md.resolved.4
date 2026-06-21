@@ -1,0 +1,117 @@
+# GT Group CRM v2.0 — 10-20 Year Master Vision Plan
+> **Unified Global Platform | Enterprise Architecture | World-Class Premium UI**
+> Updated: 2026-04-27
+
+---
+
+## 🏢 ENTERPRISE CORPORATE STRUCTURE
+
+```
+GT Group (Global Holding Company)
+├── GT Group Nexus Digital             ← B2B/B2C Enterprise Digital Solutions (AI, Software, Apps, Branding)
+└── GT Group Study Abroad Consultancy  ← Global Education Services
+
+Global Offices: 🇰🇷 South Korea | 🇧🇩 Bangladesh | 🇻🇳 Vietnam | 🇱🇰 Sri Lanka
+```
+
+---
+
+## 🎨 OFFICIAL BRAND IDENTITY (INTERNATIONAL STANDARD)
+
+| Role | Hex | Usage |
+|------|-----|-------|
+| **Primary Gold** | `#EFB748` | Main accent, buttons, active states, premium indicators |
+| **Light Gold** | `#F1DA7C` | Highlights, hover states, text accents |
+| **Deep Gold** | `#E6BC32` | Borders, KPI top bars, data visualizations |
+| **Dark / Black** | `#181A19` | Main application background (Dark Mode) |
+| **Charcoal** | `#3F434C` | Surface cards, secondary backgrounds |
+| **White** | `#FFFFFF` | Text on dark, light mode bg |
+
+**Premium Typography:**
+- Display / H1-H2: `Outfit` 700-800 (bold, modern, authoritative)
+- UI Labels: `Inter` 500-600 (clean, highly readable for dense data)
+- Body: `Inter` 400
+
+---
+
+## 🗄️ GLOBAL DATABASE ARCHITECTURE (10-20 YEAR SCALE)
+
+### Unified Supabase Instance (Enterprise Grade)
+
+**1. Staff & Permissions (Granular Control)**
+- `users` table includes `company_access` array (e.g., `['study_abroad', 'nexus_digital']`).
+- **Super Admin absolute control:** By default, ONLY Super Admins can see the Website Management menus. Access must be explicitly granted per staff member, per website.
+- **Unified Task View:** Staff see all their assigned tasks across both companies in one single, intelligent dashboard view, filtered securely by their access level.
+
+**2. Separated Sales Pipelines**
+- **Study Abroad Pipeline (`study_leads`)**
+  - High-volume, B2C student lead tracking.
+- **Nexus Digital Pipeline (`nexus_b2b_clients`)**
+  - Long sales cycles, high-ticket digital solutions (AI Automation, iOS/Android Apps, Enterprise Branding).
+  - Stages: *Discovery/Audit → Solution Architecture → Proposal & Tech Specs → Contract Negotiation → Development Active → Retainer/Maintenance*.
+
+**3. Three Dedicated Website CMS Engines**
+- `website_main_gt` (Holding Company content, Global Press, Investor Relations)
+- `website_nexus` (Enterprise Portfolio, AI/Software Case Studies, Tech Stack, Services)
+  - Fields needed: *Client Name, Industry, Challenge, AI/Tech Stack Used, Live App Links, ROI/Metrics*.
+- `website_study` (Destinations, Universities, Scholarships, Student Testimonials)
+
+---
+
+## 🌐 CRM NAVIGATION (PREMIUM UX)
+
+### Website Management (Strictly Permission-Gated)
+*Visible only to Super Admins and explicitly authorized content managers.*
+- **GT Main Website** (Global News, Board Members)
+- **GT Nexus Digital** (Services, Enterprise Case Studies, Software Portfolio)
+- **GT Study Abroad** (Universities, Destinations, Academic Programs)
+
+### Global Operations (Core CRM)
+- **Executive Command (Dashboard)** (High-level, visually stunning charts combining global revenue + segmented company performance)
+- **Admissions Pipeline** (Study Abroad)
+- **Digital Solutions Pipeline** (Nexus B2B/B2C Clients)
+- **Global Consultations** (Shared calendar)
+- **Unified Task Center** (All tasks for the logged-in employee across all allowed companies)
+- **Office Schedule & HR** 
+- **Corporate Address Book** 
+- **Global Assets & Inventory** 
+- **Financial Control** (Expenses, Budgeting, Revenue Tracking)
+- **Advanced Analytics** (AI-driven insights on company growth)
+- **Super Admin Security** (CCTV, Audit Logs, System Settings)
+
+---
+
+## ✨ 1000x ADVANCED UX / UI DESIGN PRINCIPLES
+
+### 1. "Invisible UI" Philosophy
+The CRM must feel completely effortless. No cluttered tables; instead, we use intelligent data cards, smooth slide-out panels, and contextual menus. The system anticipates what the user needs to do next.
+
+### 2. Intelligent Dark/Light Mode
+- **System-First:** The CRM strictly respects the user's OS preference on first load.
+- **Premium Glassmorphism:** Deep dark background (`#0F1110`) with gold-tinted frosted glass (`rgba(239,183,72,0.06)`). Creates depth, hierarchy, and a luxury feel expected from an international tech holding company.
+
+### 3. Data Visualization Mastery
+Financials and pipelines will not be boring spreadsheets. We will use interactive, animated, high-performance charts (e.g., Recharts) with the GT Gold palette to make data beautiful and instantly understandable.
+
+---
+
+## 🚀 ROADMAP TO DEPLOYMENT
+
+### ✅ Phase 1 — Foundation & Brand (DONE)
+- [x] Global design system architecture.
+- [x] GT Group official colors implemented.
+- [x] Responsive framework for mobile & desktop.
+
+### 🔲 Phase 2 — UX/UI Complete Overhaul (CURRENT)
+- [ ] Redesign the entire Dashboard to be an "Executive Command Center".
+- [ ] Replace standard tables with premium Glassmorphism data grids.
+- [ ] Implement slide-out panels for editing (no more ugly full-page forms).
+
+### 🔲 Phase 3 — Enterprise Database Expansion
+- [ ] Build the Nexus Digital (`b2b_clients`) pipeline tables.
+- [ ] Build the 3 dedicated Website CMS schemas.
+- [ ] Implement the strict Super-Admin granular permission system.
+
+### 🔲 Phase 4 — Automation & AI Readiness
+- [ ] Setup webhooks for automatic lead generation from websites.
+- [ ] Prepare data structures for future AI business analytics.

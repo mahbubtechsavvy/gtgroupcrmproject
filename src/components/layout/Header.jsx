@@ -5,15 +5,23 @@ import { useRouter } from 'next/navigation';
 import { signOut, getRoleLabel } from '@/lib/auth';
 import { isSuperAdmin } from '@/lib/permissions';
 import { getSupabaseClient } from '@/lib/supabase';
+import FlagIcon from '@/components/ui/FlagIcon';
+import { formatOfficeLocalTime } from '@/lib/officeMetadata';
 import Image from 'next/image';
 import styles from './Header.module.css';
 
-export default function Header({ user, sidebarCollapsed }) {
+export default function Header({ user, offices = [], sidebarCollapsed }) {
   const router = useRouter();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [clockTick, setClockTick] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setClockTick((value) => value + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -95,6 +103,7 @@ export default function Header({ user, sidebarCollapsed }) {
   const hasNotifications = groupedNotifications.today.length > 0 || groupedNotifications.earlier.length > 0;
 
   const superAdmin = isSuperAdmin(user?.role);
+  const officeTicker = (superAdmin ? offices : offices.filter((office) => office.id === user?.office_id)).slice(0, superAdmin ? 6 : 1);
 
   return (
     <header
@@ -104,19 +113,13 @@ export default function Header({ user, sidebarCollapsed }) {
       {/* Left: Page info */}
       <div className={styles.left}>
         {user && (
-          <div className={styles.officeTag}>
-            {superAdmin ? (
-              <span className={styles.superBadge}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-                Super Admin
+          <div className={styles.officeTag} style={{ gap: 12, flexWrap: 'wrap' }}>
+            {officeTicker.map((office) => (
+              <span key={`${office.id}-${clockTick}`} className={styles.officeName} title={office.name}>
+                <FlagIcon countryName={office.country} size="sm" />
+                <span>{formatOfficeLocalTime(office)}</span>
               </span>
-            ) : (
-              <span className={styles.officeName}>
-                🏢 {user.offices?.name || 'Office'}
-              </span>
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -164,7 +167,7 @@ export default function Header({ user, sidebarCollapsed }) {
                   <div className={styles.notifEmpty}>
                     <div className={styles.notifEmptyIcon}>🔔</div>
                     <p className={styles.notifEmptyText}>No notifications yet</p>
-                    <p className={styles.notifEmptySubtext}>You're all caught up!</p>
+                    <p className={styles.notifEmptySubtext}>You&apos;re all caught up!</p>
                   </div>
                 ) : (
                   <>

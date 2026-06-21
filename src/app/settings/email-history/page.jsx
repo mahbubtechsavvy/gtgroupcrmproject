@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Mail, Filter, RotateCcw, Eye, EyeOff, Download } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase';
+const supabase = getSupabaseClient();
 import styles from './email-history.module.css';
 
 export default function EmailHistoryPage() {

@@ -1,8 +1,8 @@
 .page {
   padding: 32px;
   min-height: 100vh;
-  background: #1a1a2e;
-  color: #fff;
+  background: var(--bg);
+  color: var(--text);
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -203,7 +203,7 @@
   height: 100vh;
   color: #94a3b8;
   font-size: 16px;
-  background: #1a1a2e;
+  background: var(--bg);
 }
 
 .errorContainer {

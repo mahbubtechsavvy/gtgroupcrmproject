@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import { 
   Plus, 
   UserPlus, 
@@ -104,26 +105,34 @@ export default function VisitorLogPage() {
     XLSX.utils.book_append_sheet(wb, ws, 'VisitorLog');
     XLSX.writeFile(wb, `GT_Group_Visitors_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
+  const metrics = [
+    { label: 'Total Visits', value: visitors.length },
+    { label: 'Inside Now', value: visitors.filter((visitor) => !visitor.check_out).length },
+    { label: 'Checked Out', value: visitors.filter((visitor) => visitor.check_out).length },
+    { label: 'Hosts Used', value: new Set(visitors.map((visitor) => visitor.host_staff_id).filter(Boolean)).size },
+  ];
 
   if (loading) return <div className="empty-state">Loading Visitor Logs...</div>;
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <h1 className="page-title">Visitor Management</h1>
-          <p className="page-subtitle">Security log for office guests and clients</p>
-        </div>
-        <div className="flex gap-12">
-          <button className="btn btn-secondary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-             <FileDown size={18} /> Export Log
-          </button>
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-             <UserPlus size={18} /> Log New Visitor
-          </button>
-        </div>
-      </div>
+      <ExecutiveHero
+        eyebrow="Real-Time Reception"
+        title="Visitor Management"
+        subtitle="Cross-office live visitor visibility with host staff context, check-in status, and exportable history."
+        actions={
+          <>
+            <button className="btn btn-secondary" onClick={exportToExcel}><FileDown size={16} /> Export Log</button>
+            <button className="btn btn-primary" onClick={() => setShowForm(true)}><UserPlus size={16} /> Log New Visitor</button>
+          </>
+        }
+      />
 
+      <ExecutiveSection title="Visitor Summary">
+        <MetricGrid items={metrics} />
+      </ExecutiveSection>
+
+      <ExecutiveSection title="Live Visitor Register" subtitle="Super admin can monitor office traffic and current in-office visitor status in real time.">
       <div className={styles.logCard}>
         <table className={styles.table}>
           <thead>
@@ -185,6 +194,7 @@ export default function VisitorLogPage() {
           </tbody>
         </table>
       </div>
+      </ExecutiveSection>
 
       {showForm && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>

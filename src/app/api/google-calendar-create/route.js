@@ -1,8 +1,9 @@
 // API Route: Create event in Google Calendar
 // POST /api/google-calendar-create
-import { supabase } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request) {
+  const supabase = createServerSupabaseClient();
   try {
     const { emailAccountId, eventData } = await request.json();
 

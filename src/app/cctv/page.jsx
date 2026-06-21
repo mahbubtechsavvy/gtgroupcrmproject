@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Settings, ShieldCheck, Globe, RefreshCcw, CameraOff, Monitor, AlertCircle } from 'lucide-react';
+import { Settings, ShieldCheck, Globe, RefreshCcw, CameraOff, Monitor, AlertCircle, Target, Play, Square } from 'lucide-react';
+import { ExecutiveHero } from '@/components/crm/ExecutivePage';
+import FlagIcon from '@/components/ui/FlagIcon';
 import CameraPlayer from '@/components/cctv/CameraPlayer';
 import DeviceManager from '@/components/cctv/DeviceManager';
+import AiTracker from '@/components/cctv/AiTracker';
 import styles from './CctvPage.module.css';
 
 const supabase = createBrowserClient(
@@ -18,10 +21,12 @@ export default function CctvPage() {
   const [devices, setDevices] = useState([]);
   const [activeOfficeId, setActiveOfficeId] = useState('all');
   const [showManager, setShowManager] = useState(false);
+  const [showAiTracker, setShowAiTracker] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [streams, setStreams] = useState({}); // deviceId -> streamUrl
   const [errorStatus, setErrorStatus] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const init = async () => {
@@ -123,13 +128,36 @@ export default function CctvPage() {
 
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices, activeOfficeId]);
+  }, [devices, activeOfficeId, refreshKey]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     setStreams({}); // Clear streams to force restart
+    setRefreshKey(prev => prev + 1); // Trigger the useEffect to restart streams
     await fetchDevices();
     setIsRefreshing(false);
+  };
+
+  const filteredDevices = activeOfficeId === 'all' 
+    ? devices 
+    : devices.filter(d => d.office_id === activeOfficeId);
+
+  const allPlaying = filteredDevices.length > 0 && filteredDevices.every(d => !!streams[d.id]);
+
+  const handlePlayAllToggle = () => {
+    if (allPlaying) {
+      const newStreams = { ...streams };
+      filteredDevices.forEach(d => {
+        delete newStreams[d.id];
+      });
+      setStreams(newStreams);
+    } else {
+      filteredDevices.forEach(d => {
+        if (!streams[d.id]) {
+          startStream(d.id);
+        }
+      });
+    }
   };
 
   const isSuperAdmin = ['ceo', 'coo', 'it_manager'].includes(user?.role);
@@ -149,10 +177,6 @@ export default function CctvPage() {
     );
   }
 
-  const filteredDevices = activeOfficeId === 'all' 
-    ? devices 
-    : devices.filter(d => d.office_id === activeOfficeId);
-
   // Group devices by office
   const groupedDevices = offices.map(office => ({
     ...office,
@@ -161,39 +185,64 @@ export default function CctvPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerTitle}>
-          <Monitor className={styles.titleIcon} size={32} />
-          <div>
-            <h1>Office CCTV Monitoring</h1>
-            <p>Live real-time security feeds across all international branches.</p>
-          </div>
-        </div>
-        
-        <div className={styles.headerActions}>
-          <button 
-            className={`${styles.refreshBtn} ${isRefreshing ? styles.refreshing : ''}`}
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RefreshCcw size={18} />
-            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-          </button>
-          
-          {isSuperAdmin && (
+      <ExecutiveHero
+        eyebrow="Realtime Security"
+        title="Office CCTV Monitoring"
+        subtitle="Elegant premium monitoring for all branches with faster office switching, cleaner background treatment, and brand-matched camera surfaces."
+        actions={
+          <div className={styles.headerActions}>
+            {!showManager && !showAiTracker && (
+              <button 
+                className={styles.refreshBtn}
+                onClick={handlePlayAllToggle}
+              >
+                {allPlaying ? <Square size={18} /> : <Play size={18} />}
+                <span>{allPlaying ? 'Stop All' : 'Play All'}</span>
+              </button>
+            )}
+
             <button 
-              className={`${styles.adminBtn} ${showManager ? styles.active : ''}`}
-              onClick={() => setShowManager(!showManager)}
+              className={`${styles.refreshBtn} ${isRefreshing ? styles.refreshing : ''}`}
+              onClick={handleRefresh}
+              disabled={isRefreshing}
             >
-              {showManager ? <Globe size={18} /> : <Settings size={18} />}
-              {showManager ? 'Back to Dashboard' : 'Manage Devices'}
+              <RefreshCcw size={18} />
+              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
-          )}
-        </div>
-      </header>
+            
+            {isSuperAdmin && (
+              <>
+                <button 
+                  className={`${styles.adminBtn} ${showAiTracker ? styles.active : ''}`}
+                  onClick={() => {
+                    setShowAiTracker(!showAiTracker);
+                    setShowManager(false);
+                  }}
+                >
+                  <Target size={18} />
+                  {showAiTracker ? 'Back to Dashboard' : 'AI Workstation Tracker'}
+                </button>
+
+                <button 
+                  className={`${styles.adminBtn} ${showManager ? styles.active : ''}`}
+                  onClick={() => {
+                    setShowManager(!showManager);
+                    setShowAiTracker(false);
+                  }}
+                >
+                  {showManager ? <Globe size={18} /> : <Settings size={18} />}
+                  {showManager ? 'Back to Dashboard' : 'Manage Devices'}
+                </button>
+              </>
+            )}
+          </div>
+        }
+      />
 
       {showManager && isSuperAdmin ? (
         <DeviceManager offices={offices} onUpdate={fetchDevices} />
+      ) : showAiTracker && isSuperAdmin ? (
+        <AiTracker devices={devices} offices={offices} streams={streams} startStream={startStream} />
       ) : (
         <>
           <div className={styles.filters}>
@@ -224,6 +273,7 @@ export default function CctvPage() {
             groupedDevices.map(officeGroup => (
               <div key={officeGroup.id} className={styles.officeSection}>
                 <div className={styles.officeHeader}>
+                  <FlagIcon countryName={officeGroup.country} size="sm" />
                   <div className={styles.officeDot} />
                   <h2>{officeGroup.name}</h2>
                 </div>
@@ -234,6 +284,15 @@ export default function CctvPage() {
                       cameraName={device.name}
                       streamUrl={streams[device.id]}
                       onRetry={() => startStream(device.id)}
+                      onToggle={() => {
+                        if (streams[device.id]) {
+                          const newStreams = { ...streams };
+                          delete newStreams[device.id];
+                          setStreams(newStreams);
+                        } else {
+                          startStream(device.id);
+                        }
+                      }}
                     />
                   ))}
                 </div>

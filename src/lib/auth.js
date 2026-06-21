@@ -1,4 +1,5 @@
 import { getSupabaseClient } from './supabase';
+import { isSuperAdmin as permissionIsSuperAdmin } from './permissions';
 
 export async function getSession() {
   const supabase = getSupabaseClient();
@@ -49,11 +50,11 @@ export async function resetPassword(email) {
 }
 
 export function isSupertAdmin(role) {
-  return ['ceo', 'coo', 'it_manager'].includes(role);
+  return permissionIsSuperAdmin(role);
 }
 
 export function isSuperAdmin(role) {
-  return ['ceo', 'coo', 'it_manager'].includes(role);
+  return permissionIsSuperAdmin(role);
 }
 
 export function getRoleLabel(role) {

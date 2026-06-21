@@ -14,6 +14,8 @@ export const metadata = {
   keywords: 'CRM, study abroad, students, GT Group, Bangladesh, Korea, Sri Lanka, Vietnam',
 };
 
+import { ThemeProvider } from '@/context/ThemeContext';
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
@@ -23,9 +25,11 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
-        <AppLayout>
-          {children}
-        </AppLayout>
+        <ThemeProvider>
+          <AppLayout>
+            {children}
+          </AppLayout>
+        </ThemeProvider>
       </body>
     </html>
   );

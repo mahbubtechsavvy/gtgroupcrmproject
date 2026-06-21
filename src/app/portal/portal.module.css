@@ -1,0 +1,356 @@
+.portalWrapper {
+  min-height: 100vh;
+  background: var(--bg-dark);
+  background-image: radial-gradient(circle at 50% 0%, rgba(239, 183, 72, 0.08) 0%, transparent 70%);
+  display: flex;
+  flex-direction: column;
+}
+
+.portalHeader {
+  height: 80px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logoBadge {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+  color: var(--bg-dark);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  font-family: var(--font-heading, Outfit);
+  box-shadow: 0 4px 15px rgba(239, 183, 72, 0.3);
+}
+
+.brandText {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-heading, Outfit);
+  letter-spacing: -0.5px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.iconBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.iconBtn:hover {
+  color: var(--gold);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.notificationDot {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background: var(--danger, #ff4d4d);
+  border-radius: 50%;
+  border: 2px solid var(--bg-dark);
+}
+
+.profileDropdown {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.profileDropdown:hover {
+  border-color: var(--gold-border);
+  background: rgba(239, 183, 72, 0.05);
+}
+
+.clientAvatar {
+  width: 32px;
+  height: 32px;
+  background: var(--surface-2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+}
+
+.clientInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.clientName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.clientType {
+  font-size: 0.75rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.logoutBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.logoutBtn:hover {
+  color: var(--danger, #ff4d4d);
+}
+
+.portalMain {
+  flex: 1;
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Dashboard Specific Styles */
+.welcomeSection {
+  margin-bottom: 20px;
+}
+
+.welcomeTitle {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+  font-family: var(--font-heading, Outfit);
+}
+
+.welcomeSubtitle {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.mainCard {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 30px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.mainCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+}
+
+.cardTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.stepperLine {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--surface-2);
+  z-index: 1;
+}
+
+.stepperProgress {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  height: 2px;
+  background: var(--gold);
+  z-index: 2;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100px;
+}
+
+.stepCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  border: 2px solid var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  transition: var(--transition);
+}
+
+.step.completed .stepCircle {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg-dark);
+  box-shadow: 0 0 15px rgba(239, 183, 72, 0.4);
+}
+
+.step.active .stepCircle {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--bg-dark);
+  box-shadow: 0 0 0 4px rgba(239, 183, 72, 0.2);
+}
+
+.stepLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.step.completed .stepLabel, .step.active .stepLabel {
+  color: var(--text);
+}
+
+/* Document List */
+.docList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.docItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+
+.docItem:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--gold-border);
+}
+
+.docInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.docIcon {
+  color: var(--gold);
+  padding: 8px;
+  background: var(--gold-glass);
+  border-radius: 8px;
+}
+
+.docName {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.docMeta {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.docStatus {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.statusApproved {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.statusPending {
+  background: rgba(239, 183, 72, 0.1);
+  color: var(--gold);
+  border: 1px solid var(--gold-border);
+}

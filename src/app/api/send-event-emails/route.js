@@ -2,7 +2,7 @@
 // POST /api/send-event-emails
 // Triggered when event is created/updated to send emails to attendees
 
-import { supabase } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import {
   selectEmailAccount,
   logEmailSending,
@@ -12,6 +12,7 @@ import { generateEventNotificationEmail } from '@/lib/emailTemplates/eventNotifi
 import { generateOnlineMeetingAlertEmail } from '@/lib/emailTemplates/onlineMeetingAlert';
 
 export async function POST(request) {
+  const supabase = createServerSupabaseClient();
   try {
     const {
       eventId,

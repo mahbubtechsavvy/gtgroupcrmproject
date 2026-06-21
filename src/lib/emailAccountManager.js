@@ -1,6 +1,7 @@
 // Email Account Management Utilities
 // For adding, removing, verifying email accounts
-import { supabase } from './supabase';
+import { getSupabaseClient } from './supabase';
+const supabase = getSupabaseClient();
 
 /**
  * Add a new email account for the user

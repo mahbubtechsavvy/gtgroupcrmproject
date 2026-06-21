@@ -1,0 +1,67 @@
+fast prompt: i want to make a Study Abroad Consultancy Customer Relationship Management (CRM) system for GT Group Study Abroad Consultancy. We Helping students achieve their dream of studying abroad. Our offices in South Korea, Bangladesh, Sri Lanka & Vietnam.
+
+2n prompt:
+
+
+project DB information: 
+
+web: https://supabase.com/dashboard/project/kjppkkumublhiwzwufhe
+
+Organization: gtgroupcrm
+Project name: gtgroupcrmproject
+Database password: @GTgroupcrm2026
+admin@gtgroup.com
+receptionist@gtbd.com
+fh6851411@gmail.com
+@Fh6851411
+
+
+
+Student Photo 
+Father Photo    
+Mother Photo 
+Student Passport
+Student Birth Certificate  
+Student NID
+Father NID   
+Father Passport
+Mother NID
+Mother Passport
+SSC Certificate 
+SSC Transcript 
+HSC Certificate 
+HSC Transcript
+Language Certificate IELTS 
+Language Certificate TOEFL
+Language Certificate TOPIK
+Student Signature
+Mother Signature
+Father Signature 
+Testimonial
+Police Clearance certificate
+TB Test 
+No Objection Certificate (NOC) from Parents
+Citizenship certificate
+Family Relationship Certificate 
+Trade License 
+TIN Certificate 
+Income Tax Certificate 
+Acknowledgement Receipt (After income Tax Payment)
+Challan Copy (Income Tax Payment Receipt)
+Medical From
+Cover Letter
+Visa Issuance Number
+Visa from
+Admission From
+Invoice
+Offer letter
+Dormitory From
+Bank Solvency Certificate
+Bank Statement
+Tuition Fee Payment Receipt (Swift copy)
+Air Ticket
+Annual Income Certificate
+University License
+
+
+

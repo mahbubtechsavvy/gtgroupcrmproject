@@ -17,4 +17,18 @@ export function getSupabaseClient() {
   return client;
 }
 
+let authSessionRequest = null;
+
+export async function getAuthSession() {
+  if (!authSessionRequest) {
+    authSessionRequest = getSupabaseClient().auth.getSession();
+  }
+
+  try {
+    return await authSessionRequest;
+  } finally {
+    authSessionRequest = null;
+  }
+}
+
 export default getSupabaseClient;

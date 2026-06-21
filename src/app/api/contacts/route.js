@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 export async function GET(request) {
@@ -12,7 +12,7 @@ export async function GET(request) {
 
     let query = supabase
       .from('contact_network')
-      .select('*');
+      .select('*, offices(name)');
 
     if (officeId) query = query.eq('office_id', officeId);
 
@@ -28,9 +28,16 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { data, error } = await supabase
-      .from('contact_network')
-      .upsert(body)
+    const payload = {
+      ...body,
+      office_id: body.office_id || null,
+      created_by: body.created_by || null,
+    };
+    const query = payload.id
+      ? supabase.from('contact_network').upsert(payload)
+      : supabase.from('contact_network').insert(payload);
+
+    const { data, error } = await query
       .select()
       .single();
 

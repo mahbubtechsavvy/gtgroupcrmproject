@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import { 
   Plus, 
   Search, 
@@ -15,7 +16,7 @@ import {
   FileDown
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
-import { isSuperAdmin } from '@/lib/auth';
+import { isSuperAdmin } from '@/lib/permissions';
 import * as XLSX from 'xlsx';
 import styles from './inventory.module.css';
 
@@ -123,29 +124,35 @@ export default function InventoryPage() {
   };
 
   const canManage = currentUser?.role === 'ceo' || currentUser?.role === 'coo' || currentUser?.role === 'office_manager';
+  const metrics = [
+    { label: 'Asset Rows', value: items.length },
+    { label: 'Active', value: items.filter((item) => item.status === 'active').length },
+    { label: 'In Repair', value: items.filter((item) => item.status === 'in_repair').length },
+    { label: 'Total Units', value: items.reduce((sum, item) => sum + Number(item.quantity || 0), 0) },
+  ];
 
   if (loading) return <div className="empty-state">Loading Inventory...</div>;
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.title}>
-          <h1>Office Inventory</h1>
-          <p>Tracking assets across GT Group offices</p>
-        </div>
-        <div className="flex gap-12">
-          <button className="btn btn-secondary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-             <FileDown size={18} /> Export Inventory
-          </button>
-          {canManage && (
-            <button className="btn btn-primary" onClick={() => { setShowForm(true); setEditItem(null); }}>
-               <Plus size={18} /> Add New Asset
-            </button>
-          )}
-        </div>
-      </div>
+      <ExecutiveHero
+        eyebrow="Asset Governance"
+        title="Inventory Intelligence"
+        subtitle="Multi-office inventory tracking, assignment visibility, and executive asset control across all businesses."
+        actions={
+          <>
+            <button className="btn btn-secondary" onClick={exportToExcel}><FileDown size={16} /> Export Inventory</button>
+            {canManage && <button className="btn btn-primary" onClick={() => { setShowForm(true); setEditItem(null); }}><Plus size={16} /> Add New Asset</button>}
+          </>
+        }
+      />
+
+      <ExecutiveSection title="Inventory Summary">
+        <MetricGrid items={metrics} />
+      </ExecutiveSection>
 
       {/* Main List */}
+      <ExecutiveSection title="Asset Register" subtitle="Track ownership, location, repair status, and deployment across offices.">
       <div className={styles.card}>
         <table className={styles.table}>
           <thead>
@@ -217,6 +224,7 @@ export default function InventoryPage() {
           </tbody>
         </table>
       </div>
+      </ExecutiveSection>
 
       {/* Entry Form Modal */}
       {showForm && (

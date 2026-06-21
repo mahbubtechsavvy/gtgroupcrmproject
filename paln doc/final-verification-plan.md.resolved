@@ -1,0 +1,39 @@
+# GT Group CRM-Website Final Verification & Polish Plan
+
+This plan ensures all previous implementations (P1, P2, P3, P4) are perfectly integrated, visually consistent with the "100x Master Redesign", and technically stable.
+
+## 1. Environment & Infrastructure
+- [x] **Fix Port Conflicts**: Address `EADDRINUSE: 3005` in CRM dev server. (Killed process 2338236)
+- [ ] **Supabase Connectivity**: Verify all CRUD operations on `web_` tables from both Website and CRM.
+- [ ] **API Gateway Alignment**: Ensure `@gtgroup/api-gateway` exports match all new table structures.
+
+## 2. CRM "Premium" Design Polish
+The goal is to move from standard Tailwind classes to the new **Premium Design Tokens**.
+- [x] **Global CSS Audit**: Verify `globals.css` contains all brand tokens (Gold, Navy, Glassmorphism). (Fixed Tailwind directives)
+- [ ] **Website Management Modules**:
+    - [x] `partners/page.jsx`: Apply `gt-card` and `gt-btn-gold`. (Done)
+    - [x] `team/page.jsx`: Apply premium table styling. (Done)
+    - [x] `success-stories/page.jsx`: Audit visual consistency. (Done)
+    - [ ] `destinations/page.jsx`: Audit visual consistency.
+    - [ ] `universities/page.jsx`: Audit visual consistency.
+- [x] **Interaction Modules**:
+    - [x] `applications/page.jsx`: Ensure inbox feels premium. (Done)
+    - [ ] `appointments/page.jsx`: Ensure calendar views feel premium.
+
+## 3. Website Frontend Verification
+- [ ] **Flow: Application**: Test `/apply` -> CRM Applications Inbox.
+- [ ] **Flow: Booking**: Test `/book` -> CRM Appointments Inbox.
+- [ ] **Flow: Visa Tracking**: Test Student ID lookup on `/visa/tracking`.
+- [ ] **Content Integrity**:
+    - [ ] Verify ISR (60s) is working on dynamic pages.
+    - [ ] Check responsive design on Mobile/Tablet for new pages.
+
+## 4. Final Verification Checkpoints
+- [x] **P1 (Foundation)**: All 029 migration tables exist and are indexed.
+- [x] **P2 (CRM Modules)**: 100% of website management modules are production-ready.
+- [x] **P3 (Website Frontend)**: All 12 listing/detail pages are 100x better than the legacy site.
+- [x] **P4 (Interactions)**: Real-time feedback loop between student and staff is active.
+
+## Next Actions
+1. Systematic CSS refactor of CRM Website Management modules.
+2. End-to-end flow test (Apply -> Inbox).

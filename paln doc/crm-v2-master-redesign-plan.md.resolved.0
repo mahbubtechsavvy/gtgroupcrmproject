@@ -1,0 +1,183 @@
+# GT Group CRM — Version 2.0 Master Redesign Plan
+> **200x Advanced Premium UI/UX Overhaul | International Standard | Production Ready**
+
+---
+
+## 🚨 BUGS TO FIX FIRST (Pre-Design)
+
+| # | Bug | File | Fix |
+|---|-----|------|-----|
+| 1 | **Duplicate "Courses"** in Sidebar (lines 231 & 272) | `Sidebar.jsx` | Remove second entry |
+| 2 | **"Partners"** under FEEDBACK section misplaced | `Sidebar.jsx` | Move to CMS & CONTENT |
+| 3 | **Duplicate `web_team` import** using old `supabase` (not `getSupabaseClient`) | `website/team/page.jsx` | Already fixed via script — verify |
+| 4 | **"Contact Network" label** — plain name, not premium | `Sidebar.jsx` | Rename + re-section |
+
+---
+
+## 🎨 PHASE 1 — Design System v2.0 (globals.css)
+
+### Light / Dark Mode Token Architecture
+```css
+/* Two complete theme token sets in :root[data-theme="light"] and :root */
+```
+
+### New Color Palette (GT Group Brand)
+| Role | Dark Mode | Light Mode |
+|------|-----------|------------|
+| Background | `#080B14` | `#F5F7FA` |
+| Surface 1 | `#0E1220` | `#FFFFFF` |
+| Surface 2 | `#141926` | `#F0F3F8` |
+| Gold Primary | `#C9A227` | `#B8911F` |
+| Gold Light | `#F0C040` | `#D4A827` |
+| Text Primary | `#E8EDF5` | `#0E1220` |
+| Text Muted | `#8896A8` | `#5A6680` |
+| Border | `rgba(255,255,255,0.06)` | `rgba(0,0,0,0.08)` |
+| Glass BG | `rgba(255,255,255,0.04)` | `rgba(255,255,255,0.8)` |
+
+### Typography (GT Group Brand)
+- **Display / H1-H2**: `Outfit` 700-800
+- **UI Labels / H3-H6**: `Inter` 600
+- **Body / Data**: `Inter` 400-500
+- **Mono / Tracking IDs**: `JetBrains Mono` 400
+
+---
+
+## 🏗️ PHASE 2 — Navigation & Sidebar v2.0
+
+### Sidebar Redesign
+- Collapsible with **smooth CSS animation** (no flash)
+- **Section groupings** with premium separator lines
+- **Active state**: Glowing gold left border + subtle background
+- **Hover state**: Smooth glass overlay
+- **Mobile**: Full-screen slide-over drawer with backdrop blur
+- **Bottom dock**: User avatar, Theme toggle, Settings shortcut
+- **Tooltip on collapse**: Show label on hover
+
+### Corrected Navigation Structure
+```
+📊 CORE
+  ├── Dashboard (with live notification dot)
+  ├── Students / Leads
+  ├── Pipeline (Kanban)
+  └── Appointments
+
+👥 HR & OPERATIONS  
+  ├── HR Work Schedule
+  ├── Corporate Contacts  ← renamed from "Contact Network"
+  ├── Inventory Management
+  └── Visitor Log
+
+📅 TASKS
+  └── Tasks & Events
+
+💰 FINANCE
+  ├── Expense Reports
+  ├── Expenditure Plans
+  └── Reports & Analytics
+
+📡 MARKETING
+  ├── Social Media Hub
+  └── Global Broadcast ← newsletter campaigns
+
+🌍 CMS & CONTENT (Website Management)
+  ├── Destinations
+  ├── Universities
+  ├── Scholarships
+  ├── News & Blog
+  ├── Events
+  ├── Courses ← ONE entry only
+  ├── Partners ← MOVED HERE from Feedback
+  └── FAQs
+
+💬 FEEDBACK & ENGAGEMENT
+  ├── Testimonials
+  ├── Team Profiles
+  └── Subscribers
+
+🔒 SYSTEM
+  ├── CCTV Monitor (Super Admin)
+  └── Settings
+```
+
+---
+
+## 📱 PHASE 3 — Responsive Mobile Architecture
+
+### Breakpoints
+| Breakpoint | Layout Change |
+|---|---|
+| `≥ 1280px` | Full sidebar (280px), content full |
+| `1024-1279px` | Collapsed sidebar (72px icon-only) |
+| `768-1023px` | Hidden sidebar, hamburger menu |
+| `< 768px` | Mobile: drawer + stacked layout |
+
+### Mobile-Specific Patterns
+- **Bottom Navigation Bar** on mobile (5 core items)
+- KPI grid: 2 columns on tablet, 1 on phone
+- Tables: **Card-stack view** on mobile (no horizontal scroll)
+- Modals: **Bottom sheet** on mobile, centered on desktop
+- Header: Compact, search icon instead of inline
+
+---
+
+## ✨ PHASE 4 — Premium UI Component Upgrades
+
+### New Components
+1. **ThemeToggle** — Animated sun/moon switch with localStorage persistence
+2. **MobileDrawer** — Slide-over sidebar for mobile
+3. **BottomNav** — Mobile bottom navigation
+4. **PageTransition** — Smooth route change animation
+5. **CommandPalette** — `Ctrl+K` global search/navigation (premium feature)
+6. **NotificationCenter** — Bell icon with slide-out panel
+7. **BreadcrumbNav** — Context trail for nested pages
+
+### Glassmorphism Upgrade
+```css
+/* V2 Glass Standard */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 
+    0 8px 32px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+```
+
+### Animation System
+- All transitions: `0.2s cubic-bezier(0.4, 0, 0.2, 1)`
+- Hover lift: `translateY(-2px)` + shadow expansion
+- Loading: Skeleton shimmer with gold gradient
+- Page enter: `slideUp` 0.3s
+- Number counters: CountUp animation on KPI cards
+
+---
+
+## 🔧 PHASE 5 — Implementation File Map
+
+| Priority | File | Change |
+|---|---|---|
+| 🔴 P0 | `globals.css` | Complete v2.0 rewrite with light/dark tokens |
+| 🔴 P0 | `Sidebar.jsx` | Fix duplicates + full redesign |
+| 🔴 P0 | `Sidebar.module.css` | Full redesign |
+| 🔴 P0 | `AppLayout.jsx` | Add ThemeProvider, mobile detection |
+| 🔴 P0 | `Header.jsx` | Dark/Light toggle, notifications, mobile menu |
+| 🟠 P1 | `ThemeToggle.jsx` | New component |
+| 🟠 P1 | `MobileDrawer.jsx` | New component |
+| 🟠 P1 | `BottomNav.jsx` | New mobile component |
+| 🟡 P2 | `dashboard/page.jsx` | v2.0 KPI redesign |
+| 🟡 P2 | All CMS pages | Consistent grid/table upgrade |
+
+---
+
+## 🎯 Success Criteria
+
+- ✅ Zero duplicate nav entries
+- ✅ Build passes `npm run build` with 0 errors
+- ✅ Light mode works perfectly (all tokens swap)
+- ✅ Mobile: usable on 375px iPhone screen
+- ✅ Tablet: usable on 768px iPad
+- ✅ Glass premium aesthetic throughout
+- ✅ Gold accent consistent on all interactive elements
+- ✅ Page transitions smooth
+- ✅ All CMS pages use correct database table names

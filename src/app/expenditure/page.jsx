@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import { 
   Plus, 
   Search, 
@@ -13,7 +14,8 @@ import {
   DollarSign
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
-import { isSuperAdmin } from '@/lib/auth';
+import { isSuperAdmin } from '@/lib/permissions';
+import { getOfficeMeta } from '@/lib/officeMetadata';
 import styles from './expenditure.module.css';
 
 export default function ExpenditurePage() {
@@ -121,18 +123,25 @@ export default function ExpenditurePage() {
   if (loading) return <div className="empty-state">Loading Expenditure Plans...</div>;
 
   const totalEstimate = activePlan?.items?.reduce((acc, i) => acc + parseFloat(i.estimated_cost || 0), 0) || 0;
+  const activeOfficeMeta = getOfficeMeta(plans.find((plan) => plan.id === activePlan?.id)?.offices || currentUser?.offices || {});
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <h1 className="page-title">Expenditure Planning</h1>
-          <p className="page-subtitle">Strategic monthly budget requests and forecasting</p>
-        </div>
-        <button className="btn btn-primary" onClick={createPlan}>
-           <TrendingUp size={18} /> Plan Next Month
-        </button>
-      </div>
+      <ExecutiveHero
+        eyebrow="Budget Forecasting"
+        title="Budgeting & Plans"
+        subtitle="Strategic office budget requests with local-currency planning and headquarters-normalized USD / KRW visibility."
+        actions={<button className="btn btn-primary" onClick={createPlan}><TrendingUp size={16} /> Plan Next Month</button>}
+      />
+
+      <ExecutiveSection title="Budget Snapshot">
+        <MetricGrid items={[
+          { label: `Projected (${activeOfficeMeta.currency})`, value: totalEstimate.toFixed(2) },
+          { label: 'USD Equivalent', value: (totalEstimate * activeOfficeMeta.usdRate).toFixed(2) },
+          { label: 'KRW Equivalent', value: Math.round(totalEstimate * activeOfficeMeta.krwRate) },
+          { label: 'Request Items', value: activePlan?.items?.length || 0 },
+        ]} />
+      </ExecutiveSection>
 
       <div className={styles.planGrid}>
         {/* Sidebar */}
@@ -149,64 +158,73 @@ export default function ExpenditurePage() {
         </div>
 
         {/* Main Details */}
-        <div className="card" style={{ padding: '2rem' }}>
+        {/* Main Details */}
+        <div className={styles.glassCard}>
            {activePlan ? (
               <>
                  <div className="flex-between mb-24">
                     <div>
-                       <h2 className="text-xl font-bold">Plan Details</h2>
-                       <p className="text-xs text-muted">Approval Status: <span className="text-gold">{activePlan.status}</span></p>
+                       <h2 className="text-2xl font-black text-white tracking-tight">Financial Intelligence Protocol</h2>
+                       <p className="text-xs text-text-dim mt-1 font-bold uppercase tracking-widest">Plan Month: {new Date(activePlan.plan_month).toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                     </div>
                     {activePlan.status === 'pending' && (
-                       <button className="btn btn-secondary btn-sm" onClick={() => setShowItemForm(true)}>
-                          <Plus size={16} /> Request Funding Item
+                       <button className="btn btn-primary" onClick={() => setShowItemForm(true)}>
+                          <Plus size={16} /> Request Funding
                        </button>
                     )}
                  </div>
 
-                 <table className={styles.detailTable}>
-                    <thead>
-                       <tr>
-                          <th>Position/Dept</th>
-                          <th>Purpose</th>
-                          <th>Priority</th>
-                          <th style={{ textAlign: 'right' }}>Est. Cost</th>
-                       </tr>
-                    </thead>
-                    <tbody>
-                       {activePlan.items?.map(item => (
-                         <tr key={item.id}>
-                            <td className="text-sm font-bold">{item.position_or_department}</td>
-                            <td className="text-sm">{item.purpose}</td>
-                            <td>
-                               <span className={`${styles.badge} ${
-                                 item.priority === 'urgent' ? styles.priorityUrgent :
-                                 item.priority === 'high' ? styles.priorityHigh : styles.priorityMed
-                               }`}>
-                                 {item.priority}
-                               </span>
-                            </td>
-                            <td style={{ textAlign: 'right', fontWeight: '800' }}>${parseFloat(item.estimated_cost).toFixed(2)}</td>
-                         </tr>
-                       ))}
-                    </tbody>
-                 </table>
+                 <div className={styles.itemGrid}>
+                    {activePlan.items?.map(item => {
+                      const pClass = item.priority === 'urgent' ? styles.priorityUrgent :
+                                   item.priority === 'high' ? styles.priorityHigh : 
+                                   item.priority === 'medium' ? styles.priorityMed : styles.priorityLow;
+                      return (
+                        <div key={item.id} className={styles.expenditureCard}>
+                           <div className={styles.itemHeader}>
+                              <span className={styles.itemDept}>{item.position_or_department}</span>
+                              <span className={`${styles.badge} ${pClass}`}>{item.priority}</span>
+                           </div>
+                           <h4 className={styles.itemPurpose}>{item.purpose}</h4>
+                           <div className="mt-auto">
+                              <div className={styles.itemCost}>$ {parseFloat(item.estimated_cost).toLocaleString()}</div>
+                           </div>
+                        </div>
+                      );
+                    })}
+                    {(!activePlan.items || activePlan.items.length === 0) && (
+                      <div className="col-span-full py-20 text-center border border-dashed border-white/5 rounded-[32px]">
+                         <p className="text-text-dim font-bold uppercase tracking-widest text-[10px]">No funding requests initialized for this cycle</p>
+                      </div>
+                    )}
+                 </div>
 
                  <div className={styles.summary}>
                     <div>
-                       <p className="text-xs text-muted mb-4 uppercase">Total Projected Budget</p>
-                       <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>$ {totalEstimate.toFixed(2)}</div>
+                       <p className="text-[10px] text-text-dim font-black mb-2 uppercase tracking-[0.2em]">Total Projected Allocation</p>
+                       <div className="text-4xl font-black text-white">$ {totalEstimate.toLocaleString()}</div>
                     </div>
-                    {isSuperAdmin(currentUser?.role) && activePlan.status === 'pending' && (
-                       <div className="flex gap-12">
-                          <button className="btn btn-secondary" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={() => updateStatus('rejected')}>REJECT</button>
-                          <button className="btn btn-primary" onClick={() => updateStatus('approved')}>APPROVE PLAN</button>
+                    <div className="flex items-center gap-6">
+                       <div className="text-right">
+                          <p className="text-[10px] text-text-dim font-black mb-1 uppercase tracking-widest text-gold">Status</p>
+                          <p className="text-sm font-black text-white uppercase tracking-tighter">{activePlan.status}</p>
                        </div>
-                    )}
+                       {isSuperAdmin(currentUser?.role) && activePlan.status === 'pending' && (
+                          <div className="flex gap-12">
+                             <button className="btn btn-secondary border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={() => updateStatus('rejected')}>REJECT</button>
+                             <button className="btn btn-primary shadow-gold" onClick={() => updateStatus('approved')}>APPROVE PROTOCOL</button>
+                          </div>
+                       )}
+                    </div>
                  </div>
               </>
            ) : (
-             <div className="empty-state">Select a month to view the detailed plan</div>
+             <div className="h-full flex flex-center py-40 opacity-30">
+                <div className="text-center">
+                   <DollarSign size={64} className="mx-auto mb-6" />
+                   <p className="font-black uppercase tracking-[0.2em] text-xs">Select Intelligence Cycle</p>
+                </div>
+             </div>
            )}
         </div>
       </div>

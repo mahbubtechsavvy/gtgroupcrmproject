@@ -1,9 +1,10 @@
 // API Route: Retry Failed Email
 // POST /api/email-retry
-import { supabase } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { retryFailedEmail } from '@/lib/emailRouter';
 
 export async function POST(request) {
+  const supabase = createServerSupabaseClient();
   try {
     const { logId } = await request.json();
 

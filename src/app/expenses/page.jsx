@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import { 
   Plus, 
   Send, 
@@ -13,7 +14,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
-import { isSuperAdmin } from '@/lib/auth';
+import { isSuperAdmin } from '@/lib/permissions';
+import { getOfficeMeta } from '@/lib/officeMetadata';
 import styles from './expenses.module.css';
 
 export default function ExpenseReportsPage() {
@@ -150,18 +152,25 @@ export default function ExpenseReportsPage() {
   if (loading) return <div className="empty-state">Loading Financial Reports...</div>;
 
   const totals = calculateTotals();
+  const activeOfficeMeta = getOfficeMeta(reports.find((report) => report.id === activeReport?.id)?.offices || currentUser?.offices || {});
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <h1 className="page-title">Expense Reports</h1>
-          <p className="page-subtitle">Monthly financial submission & audit logs</p>
-        </div>
-        <button className="btn btn-primary" onClick={createReport}>
-           <Plus size={18} /> New Monthly Report
-        </button>
-      </div>
+      <ExecutiveHero
+        eyebrow="Finance Control"
+        title="Reimbursements"
+        subtitle="Monthly finance submission with office-level totals and executive conversion visibility for USD and KRW."
+        actions={<button className="btn btn-primary" onClick={createReport}><Plus size={16} /> New Monthly Report</button>}
+      />
+
+      <ExecutiveSection title="Finance Snapshot">
+        <MetricGrid items={[
+          { label: `Income (${activeOfficeMeta.currency})`, value: totals.income.toFixed(2) },
+          { label: `Expense (${activeOfficeMeta.currency})`, value: totals.expense.toFixed(2) },
+          { label: 'USD Equivalent', value: (totals.remaining * activeOfficeMeta.usdRate).toFixed(2) },
+          { label: 'KRW Equivalent', value: Math.round(totals.remaining * activeOfficeMeta.krwRate) },
+        ]} />
+      </ExecutiveSection>
 
       {activeReport && (
         <div className={styles.summaryCards}>
@@ -213,38 +222,37 @@ export default function ExpenseReportsPage() {
                  )}
               </div>
 
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Detail & Purpose</th>
-                    <th>Fund User</th>
-                    <th style={{ textAlign: 'right' }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeReport.items?.map(item => (
-                    <tr key={item.id}>
-                      <td className="text-xs text-muted font-mono">{item.item_date}</td>
-                      <td>
-                        <div className="font-bold">{item.details}</div>
-                        <div className="text-xs text-muted italic">{item.purpose}</div>
-                      </td>
-                      <td>
-                        <div className="flex items-center gap-4 text-xs">
-                          <User size={12} />
-                          {item.fund_user_user?.full_name}
-                        </div>
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                         <span className={item.income_amount > 0 ? styles.incomeRow : styles.expenseRow}>
-                            {item.income_amount > 0 ? `+${item.income_amount}` : `-${item.expense_amount}`}
-                         </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className={styles.cardGrid}>
+                {activeReport.items?.map(item => (
+                  <div key={item.id} className={styles.expenseCard}>
+                    <div className={styles.cardHeader}>
+                      <span className={styles.dateTag}>{item.item_date}</span>
+                      <div className={item.income_amount > 0 ? styles.incomeRow : styles.expenseRow}>
+                        {item.income_amount > 0 ? (
+                          <ArrowUpRight size={18} />
+                        ) : (
+                          <ArrowDownLeft size={18} />
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className={styles.cardBody}>
+                      <div className={styles.itemDetails}>{item.details}</div>
+                      <div className={styles.itemPurpose}>{item.purpose}</div>
+                    </div>
+
+                    <div className={styles.cardFooter}>
+                      <div className={styles.userBadge}>
+                        <User size={12} />
+                        {item.fund_user_user?.full_name}
+                      </div>
+                      <div className={`${styles.amount} ${item.income_amount > 0 ? styles.incomeRow : styles.expenseRow}`}>
+                        {item.income_amount > 0 ? `+$${item.income_amount}` : `-$${item.expense_amount}`}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               <div className={styles.footer}>
                  <div className="flex items-center gap-8 text-xs text-muted">

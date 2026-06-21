@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase';
 import { useUser } from '@/components/layout/AppLayout';
+import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import { isSuperAdmin, can } from '@/lib/permissions';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -42,9 +43,15 @@ export default function StudentsPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterOffice, setFilterOffice] = useState('');
   const [filterSource, setFilterSource] = useState('');
+  const [filterPriority, setFilterPriority] = useState('');
+  const [filterDestination, setFilterDestination] = useState('');
+  const [filterCounselor, setFilterCounselor] = useState('');
   const [offices, setOffices] = useState([]);
+  const [destinations, setDestinations] = useState([]);
+  const [counselors, setCounselors] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [allOfficeStudents, setAllOfficeStudents] = useState([]);
   const PER_PAGE = 20;
 
   const superAdmin = isSuperAdmin(user?.role);
@@ -52,10 +59,37 @@ export default function StudentsPage() {
   const canEdit = can(user, 'students', 'edit');
   const canDelete = can(user, 'students', 'delete');
 
+  // Office summary for super admin
+  const officeSummaries = useMemo(() => {
+    if (!superAdmin || !allOfficeStudents.length || !offices.length) return [];
+    return offices.map(office => {
+      const officeStudents = allOfficeStudents.filter(s => s.office_id === office.id);
+      return {
+        id: office.id,
+        name: office.name,
+        country: office.country,
+        count: officeStudents.length,
+        active: officeStudents.filter(s => !['enrolled', 'rejected', 'deferred'].includes(s.pipeline_status)).length,
+        enrolled: officeStudents.filter(s => s.pipeline_status === 'enrolled').length,
+        visaApproved: officeStudents.filter(s => s.pipeline_status === 'visa_approved').length,
+      };
+    });
+  }, [superAdmin, allOfficeStudents, offices]);
+
   const loadOffices = async () => {
     const supabase = getSupabaseClient();
-    const { data } = await supabase.from('offices').select('id, name').order('name');
+    const { data } = await supabase.from('offices').select('id, name, country').order('name');
     setOffices(data || []);
+  };
+
+  const loadFilterOptions = async () => {
+    const supabase = getSupabaseClient();
+    const [{ data: dest }, { data: staff }] = await Promise.all([
+      supabase.from('destinations').select('id, country_name, flag_emoji').eq('is_active', true).order('country_name'),
+      supabase.from('users').select('id, full_name, role, office_id').eq('is_active', true).order('full_name'),
+    ]);
+    setDestinations(dest || []);
+    setCounselors((staff || []).filter((member) => ['counselor', 'senior_counselor', 'office_manager', 'ceo', 'coo', 'it_manager'].includes(member.role)));
   };
 
   const loadStudents = useCallback(async () => {
@@ -79,6 +113,9 @@ export default function StudentsPage() {
     if (filterStatus) query = query.eq('pipeline_status', filterStatus);
     if (filterOffice) query = query.eq('office_id', filterOffice);
     if (filterSource) query = query.eq('lead_source', filterSource);
+    if (filterPriority) query = query.eq('priority', filterPriority);
+    if (filterDestination) query = query.eq('target_destination_id', filterDestination);
+    if (filterCounselor) query = query.eq('assigned_to', filterCounselor);
 
     if (search && search.length > 1) {
       query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
@@ -93,7 +130,16 @@ export default function StudentsPage() {
     setStudents(data || []);
     setTotal(count || 0);
     setLoading(false);
-  }, [user, page, filterStatus, filterOffice, filterSource, search, superAdmin]);
+  }, [user, page, filterStatus, filterOffice, filterSource, filterPriority, filterDestination, filterCounselor, search, superAdmin]);
+
+  const loadOverview = useCallback(async () => {
+    if (!user) return;
+    const supabase = getSupabaseClient();
+    let query = supabase.from('students').select('id, office_id, pipeline_status, offices(id, name, country)');
+    if (!superAdmin) query = query.eq('office_id', user.office_id);
+    const { data } = await query;
+    setAllOfficeStudents(data || []);
+  }, [user, superAdmin]);
 
   useEffect(() => {
     if (searchParams.get('action') === 'add') {
@@ -106,8 +152,16 @@ export default function StudentsPage() {
   }, [user, superAdmin]);
 
   useEffect(() => {
+    if (user) loadFilterOptions();
+  }, [user]);
+
+  useEffect(() => {
     if (user) loadStudents();
   }, [user, loadStudents]);
+
+  useEffect(() => {
+    if (user) loadOverview();
+  }, [user, loadOverview]);
 
   // Debounce search
   useEffect(() => {
@@ -186,37 +240,98 @@ export default function StudentsPage() {
   };
 
   const totalPages = Math.ceil(total / PER_PAGE);
+  const overviewMetrics = useMemo(() => {
+    const source = allOfficeStudents;
+    return [
+      { label: 'Total Leads', value: source.length },
+      { label: 'Consultation', value: source.filter((student) => student.pipeline_status === 'initial_consultation').length },
+      { label: 'Docs Collecting', value: source.filter((student) => student.pipeline_status === 'documents_collecting').length },
+      { label: 'Applied', value: source.filter((student) => student.pipeline_status === 'application_submitted').length },
+      { label: 'Visa Queue', value: source.filter((student) => student.pipeline_status === 'visa_applied').length },
+      { label: 'Enrolled', value: source.filter((student) => student.pipeline_status === 'enrolled').length },
+    ];
+  }, [allOfficeStudents]);
+
+  const officeSummary = useMemo(() => {
+    const buckets = new Map();
+    allOfficeStudents.forEach((student) => {
+      const officeId = student.office_id || 'unknown';
+      const existing = buckets.get(officeId) || {
+        id: officeId,
+        name: student.offices?.name || 'Unknown Office',
+        leads: 0,
+        active: 0,
+        enrolled: 0,
+      };
+      existing.leads += 1;
+      if (!['enrolled', 'rejected', 'deferred'].includes(student.pipeline_status)) existing.active += 1;
+      if (student.pipeline_status === 'enrolled') existing.enrolled += 1;
+      buckets.set(officeId, existing);
+    });
+    return Array.from(buckets.values()).sort((a, b) => b.leads - a.leads);
+  }, [allOfficeStudents]);
 
   return (
     <div>
-      {/* Page Header */}
-      <div className="flex-between mb-24">
-        <div>
-          <h1 className="page-title">Students</h1>
-          <p className="page-subtitle">{total} total students</p>
-        </div>
-        <div className="flex gap-12">
-          <button className="btn btn-secondary btn-sm" onClick={handleExportCSV}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Export
-          </button>
-          {canCreate && (
-            <button className="btn btn-primary" id="add-student-btn" onClick={() => { setEditStudent(null); setShowForm(true); }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Add Student
-            </button>
-          )}
-        </div>
-      </div>
+      <ExecutiveHero
+        eyebrow="Student Operations"
+        title="Prospective Students"
+        subtitle="Premium lead tracking with office summaries, fast scanning, and direct access to every student profile."
+        actions={
+          <>
+            <button className="btn btn-secondary btn-sm" onClick={handleExportCSV}>Export</button>
+            {canCreate && (
+              <button className="btn btn-primary" id="add-student-btn" onClick={() => { setEditStudent(null); setShowForm(true); }}>
+                Add Student
+              </button>
+            )}
+          </>
+        }
+      />
+
+      <ExecutiveSection title="Network Summary" subtitle="All office status totals for super admin and filtered operational totals for office users.">
+        <MetricGrid items={overviewMetrics} />
+      </ExecutiveSection>
+
+      {superAdmin && officeSummaries.length > 0 && (
+        <ExecutiveSection title="Office Summary" subtitle="Quick totals by office for enrolled and visa-approved students.">
+          <div className="office-summary-grid">
+            {officeSummaries.map((office) => (
+              <div key={office.id} className="office-summary-card">
+                <div className="office-summary-card__title">
+                  <FlagIcon countryName={office.country || office.name} size="sm" />
+                  <span>{office.name}</span>
+                </div>
+                <div className="office-summary-card__metrics">
+                  <div className="mini-stat"><strong>{office.count}</strong><span>Students</span></div>
+                  <div className="mini-stat"><strong>{office.active}</strong><span>Active</span></div>
+                  <div className="mini-stat"><strong>{office.visaApproved}</strong><span>Visa OK</span></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ExecutiveSection>
+      )}
+
+      {officeSummary.length > 0 && (
+        <ExecutiveSection title="Office Breakdown" subtitle="Easy premium tracking of office pipeline strength and conversion output.">
+          <div className="summary-stack">
+            {officeSummary.map((office) => (
+              <div key={office.id} className="summary-row">
+                <strong>{office.name}</strong>
+                <div className="flex gap-4 text-sm">
+                  <span>Leads <strong>{office.leads}</strong></span>
+                  <span>Active <strong>{office.active}</strong></span>
+                  <span>Enrolled <strong>{office.enrolled}</strong></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ExecutiveSection>
+      )}
 
       {/* Search & Filters */}
-      <div className="search-filter-bar">
+      <div className="filter-grid">
         <div className="search-input-wrapper">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -232,7 +347,6 @@ export default function StudentsPage() {
 
         <select
           className="form-select"
-          style={{ width: 'auto' }}
           value={filterStatus}
           onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
           id="filter-status"
@@ -246,7 +360,6 @@ export default function StudentsPage() {
         {superAdmin && offices.length > 0 && (
           <select
             className="form-select"
-            style={{ width: 'auto' }}
             value={filterOffice}
             onChange={(e) => { setFilterOffice(e.target.value); setPage(1); }}
             id="filter-office"
@@ -258,7 +371,6 @@ export default function StudentsPage() {
 
         <select
           className="form-select"
-          style={{ width: 'auto' }}
           value={filterSource}
           onChange={(e) => { setFilterSource(e.target.value); setPage(1); }}
           id="filter-source"
@@ -269,17 +381,57 @@ export default function StudentsPage() {
           ))}
         </select>
 
-        {(filterStatus || filterOffice || filterSource || search) && (
+        <select
+          className="form-select"
+          value={filterPriority}
+          onChange={(e) => { setFilterPriority(e.target.value); setPage(1); }}
+        >
+          <option value="">All Priorities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+
+        <select
+          className="form-select"
+          value={filterDestination}
+          onChange={(e) => { setFilterDestination(e.target.value); setPage(1); }}
+        >
+          <option value="">All Destinations</option>
+          {destinations.map((destination) => (
+            <option key={destination.id} value={destination.id}>{destination.country_name}</option>
+          ))}
+        </select>
+
+        <select
+          className="form-select"
+          value={filterCounselor}
+          onChange={(e) => { setFilterCounselor(e.target.value); setPage(1); }}
+        >
+          <option value="">All Counselors</option>
+          {counselors.map((counselor) => (
+            <option key={counselor.id} value={counselor.id}>{counselor.full_name}</option>
+          ))}
+        </select>
+
+        {(filterStatus || filterOffice || filterSource || filterPriority || filterDestination || filterCounselor || search) && (
           <button className="btn btn-ghost btn-sm" onClick={() => {
-            setFilterStatus(''); setFilterOffice(''); setFilterSource(''); setSearch(''); setPage(1);
+            setFilterStatus('');
+            setFilterOffice('');
+            setFilterSource('');
+            setFilterPriority('');
+            setFilterDestination('');
+            setFilterCounselor('');
+            setSearch('');
+            setPage(1);
           }}>
             Clear filters
           </button>
         )}
       </div>
 
-      {/* Table */}
-      <div className="table-wrapper">
+      <ExecutiveSection title="Student Directory" subtitle="Compact scan view with direct actions, status filters, and office routing.">
+      <div className={styles.gridWrapper}>
         {loading ? (
           <div className="empty-state">
             <div className="loading-spinner" />
@@ -300,107 +452,70 @@ export default function StudentsPage() {
             )}
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Student</th>
-                <th>Contact</th>
-                {superAdmin && <th>Office</th>}
-                <th>Destination</th>
-                <th>Counselor</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th>Source</th>
-                <th>Added</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.map(student => {
-                const status = PIPELINE_STATUS_LABELS[student.pipeline_status];
-                return (
-                  <tr key={student.id} className={styles.studentRow} onClick={() => router.push(`/students/${student.id}`)}>
-                    <td>
-                      <div className="flex gap-12" style={{ alignItems: 'center' }}>
-                        <div className="avatar avatar-sm" style={{ flexShrink: 0, overflow: 'hidden', background: 'var(--color-gold-muted)', color: 'var(--color-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                          {student.documents?.find(d => d.document_type === 'Student Photo') ? (
-                            <img 
-                              src={student.documents.find(d => d.document_type === 'Student Photo').file_url} 
-                              alt="Profile" 
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                            />
-                          ) : (
-                            <span>{student.first_name?.charAt(0)}{student.last_name?.charAt(0)}</span>
-                          )}
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Status</th>
+                  <th>Destination</th>
+                  <th>Counselor</th>
+                  <th>Office</th>
+                  <th>Age</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {students.map((student) => {
+                  const status = PIPELINE_STATUS_LABELS[student.pipeline_status];
+                  const pColor = PRIORITY_COLORS[student.priority] || 'badge-muted';
+                  return (
+                    <tr key={student.id} onClick={() => router.push(`/students/${student.id}`)} style={{ cursor: 'pointer' }}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="avatar">
+                            {student.documents?.find((d) => d.document_type === 'Student Photo') ? (
+                              <img src={student.documents.find((d) => d.document_type === 'Student Photo').file_url} alt="Profile" />
+                            ) : (
+                              `${student.first_name?.charAt(0) || ''}${student.last_name?.charAt(0) || ''}`
+                            )}
+                          </div>
+                          <div>
+                            <strong>{student.last_name} {student.first_name}</strong>
+                            <div className="text-xs text-muted">{student.email || student.phone || 'No contact'}</div>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium" style={{ color: 'var(--color-white)' }}>
-                            {student.last_name} {student.first_name}
-                          </p>
+                      </td>
+                      <td>
+                        <div className="flex gap-2">
+                          <span className={`badge ${status?.color || 'badge-muted'}`}>{status?.label || student.pipeline_status}</span>
+                          <span className={`badge ${pColor}`}>{student.priority || 'normal'}</span>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div>
-                        <p className="text-sm">{student.email || '—'}</p>
-                        <p className="text-xs text-muted">{student.phone || ''}</p>
-                      </div>
-                    </td>
-                    {superAdmin && <td className="text-sm text-muted">{student.offices?.name || '—'}</td>}
-                    <td className="text-sm">
-                      {student.destinations ? (
-                        <FlagIcon destination={student.destinations} size="md" showName={true} />
-                      ) : '—'}
-                    </td>
-                    <td className="text-sm text-muted">{student.users?.full_name || '—'}</td>
-                    <td>
-                      {status && (
-                        <span className={`badge ${status.color}`}>{status.label}</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`badge ${PRIORITY_COLORS[student.priority] || 'badge-muted'}`}>
-                        {student.priority || '—'}
-                      </span>
-                    </td>
-                    <td className="text-sm text-muted">{student.lead_source || '—'}</td>
-                    <td className="text-sm text-muted">{timeAgo(student.created_at)}</td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-4">
-                        {canEdit && (
-                          <button
-                            className="btn btn-ghost btn-sm"
-                            title="Edit"
-                            onClick={() => { setEditStudent(student); setShowForm(true); }}
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </button>
-                        )}
-                        {canDelete && (
-                          <button
-                            className="btn btn-ghost btn-sm"
-                            title="Delete"
-                            onClick={() => handleDelete(student.id)}
-                            style={{ color: 'var(--color-danger)' }}
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          {student.destinations ? <FlagIcon destination={student.destinations} size="sm" /> : '—'}
+                          <span>{student.destinations?.country_name || '—'}</span>
+                        </div>
+                      </td>
+                      <td>{student.users?.full_name || 'Unassigned'}</td>
+                      <td>{student.offices?.name || '—'}</td>
+                      <td>{timeAgo(student.created_at)}</td>
+                      <td>
+                        <div className="flex gap-2" onClick={(event) => event.stopPropagation()}>
+                          {canEdit && <button className="btn btn-secondary btn-sm" onClick={() => { setEditStudent(student); setShowForm(true); }}>Edit</button>}
+                          {canDelete && <button className="btn btn-danger btn-sm" onClick={() => handleDelete(student.id)}>Delete</button>}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
+      </ExecutiveSection>
 
       {/* Pagination */}
       {totalPages > 1 && (

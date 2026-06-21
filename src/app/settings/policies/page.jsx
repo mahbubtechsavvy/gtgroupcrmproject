@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSupabase } from '@/lib/supabase';
+
 import styles from './policies.module.css';
 
 /**

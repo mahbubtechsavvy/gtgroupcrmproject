@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getAuthSession, getSupabaseClient } from '@/lib/supabase';
 
 export default function AuthGuard({ children }) {
   const router = useRouter();
@@ -10,8 +10,12 @@ export default function AuthGuard({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [appSettings, setAppSettings] = useState(null);
+  const authCheckRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
     // Prevent hydration error by loading cache after initial mount
     const cachedConfig = localStorage.getItem('crm_app_settings');
     if (cachedConfig) {
@@ -33,39 +37,62 @@ export default function AuthGuard({ children }) {
     };
 
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      if (authCheckRef.current) {
+        return authCheckRef.current;
+      }
 
-      if (!session) {
-        if (pathname !== '/login') {
-          router.replace('/login');
+      authCheckRef.current = (async () => {
+        try {
+          const { data: { session } } = await getAuthSession();
+
+          if (!session) {
+            if (pathname !== '/login') {
+              router.replace('/login');
+            }
+            return;
+          }
+
+          // Get user profile
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*, offices!users_office_id_fkey(id, name, country, city)')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!profile?.is_active) {
+            await supabase.auth.signOut();
+            router.replace('/login');
+            return;
+          }
+
+          setUser(profile);
+
+          if (pathname === '/login') {
+            router.replace('/dashboard');
+          }
+        } catch (error) {
+          console.error('AuthGuard checkAuth error:', error);
+
+          if (String(error?.message).includes('lock')) {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            const { data: { session } } = await getAuthSession();
+            if (!session) {
+              if (pathname !== '/login') {
+                router.replace('/login');
+              }
+              return;
+            }
+          }
+        } finally {
+          authCheckRef.current = null;
+          if (isMountedRef.current) {
+            setLoading(false);
+          }
         }
-        setLoading(false);
-        return;
-      }
+      })();
 
-      // Get user profile
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*, offices!users_office_id_fkey(id, name, country, city)')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!profile?.is_active) {
-        await supabase.auth.signOut();
-        router.replace('/login');
-        setLoading(false);
-        return;
-      }
-
-      setUser(profile);
-
-      if (pathname === '/login') {
-        router.replace('/dashboard');
-      }
-
-      setLoading(false);
+      return authCheckRef.current;
     };
-
 
     fetchSettings();
     checkAuth();
@@ -81,7 +108,10 @@ export default function AuthGuard({ children }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMountedRef.current = false;
+      subscription.unsubscribe();
+    };
   }, [pathname, router]);
 
   if (loading) {

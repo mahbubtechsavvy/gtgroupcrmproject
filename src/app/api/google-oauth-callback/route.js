@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // API Route: Google OAuth Callback Redirect
 // GET /api/google-oauth-callback
 import { redirect } from 'next/navigation';
