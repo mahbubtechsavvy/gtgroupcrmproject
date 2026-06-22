@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 // For this implementation, we provide the architecture and a placeholder for the API call.
 
 export async function POST(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

@@ -5,8 +5,8 @@ import { encrypt } from '@/lib/cctv/encryption';
 import { isSuperAdmin } from '@/lib/permissions';
 
 export async function PATCH(req, { params }) {
-  const { id } = params;
-  const cookieStore = cookies();
+  const { id } = await params;
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -51,8 +51,8 @@ export async function PATCH(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
-  const { id } = params;
-  const cookieStore = cookies();
+  const { id } = await params;
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

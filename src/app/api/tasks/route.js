@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
@@ -49,7 +49,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {

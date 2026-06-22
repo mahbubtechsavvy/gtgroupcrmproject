@@ -3,7 +3,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   try {
     const { emailAccountId } = await request.json();
 

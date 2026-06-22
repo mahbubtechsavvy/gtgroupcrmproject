@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
   try {
-    const { id: eventId } = params;
-    const supabase = createServerSupabaseClient();
+    const { id: eventId } = await params;
+    const supabase = await createServerSupabaseClient();
     
     // 1. Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -71,8 +71,8 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
-    const { id: eventId } = params;
-    const supabase = createServerSupabaseClient();
+    const { id: eventId } = await params;
+    const supabase = await createServerSupabaseClient();
     
     // 1. Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -187,8 +187,8 @@ export async function POST(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const { id: eventId } = params;
-    const supabase = createServerSupabaseClient();
+    const { id: eventId } = await params;
+    const supabase = await createServerSupabaseClient();
     
     // 1. Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

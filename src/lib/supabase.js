@@ -31,4 +31,5 @@ export async function getAuthSession() {
   }
 }
 
+export const supabase = getSupabaseClient();
 export default getSupabaseClient;

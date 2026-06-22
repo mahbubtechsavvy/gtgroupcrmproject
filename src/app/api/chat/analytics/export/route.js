@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
  * Only accessible by admins (ceo, coo, it_manager).
  */
 export async function GET(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

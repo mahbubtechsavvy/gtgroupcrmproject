@@ -4,7 +4,7 @@ import { generateAI, AI_MODELS } from '@/lib/ai/openrouter';
 
 export async function POST(request) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // 1. Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

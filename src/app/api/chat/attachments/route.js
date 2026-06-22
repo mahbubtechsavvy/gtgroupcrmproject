@@ -26,7 +26,7 @@ const MAX_FILE_SIZE = 52428800; // 50MB
 
 export async function POST(request) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -168,7 +168,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

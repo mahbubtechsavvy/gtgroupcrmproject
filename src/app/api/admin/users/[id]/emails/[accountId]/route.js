@@ -18,7 +18,7 @@ const supabase = createClient(
  */
 export async function DELETE(request, { params }) {
   try {
-    const { id: userId, accountId } = params;
+    const { id: userId, accountId } = await params;
 
     // Verify email account exists and belongs to user
     const { data: account, error: fetchError } = await supabase
@@ -77,7 +77,7 @@ export async function DELETE(request, { params }) {
  */
 export async function PUT(request, { params }) {
   try {
-    const { id: userId, accountId } = params;
+    const { id: userId, accountId } = await params;
     const { isPrimary } = await request.json();
 
     // Verify email account exists and belongs to user

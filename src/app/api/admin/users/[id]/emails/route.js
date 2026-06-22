@@ -20,7 +20,7 @@ const supabase = createClient(
  */
 export async function GET(request, { params }) {
   try {
-    const { id: userId } = params;
+    const { id: userId } = await params;
 
     // Get email accounts
     const { data: accounts, error } = await supabase
@@ -57,7 +57,7 @@ export async function GET(request, { params }) {
  */
 export async function POST(request, { params }) {
   try {
-    const { id: userId } = params;
+    const { id: userId } = await params;
     const { email, emailType, oauthToken, oauthRefreshToken, oauthExpiresAt } =
       await request.json();
 
@@ -137,7 +137,7 @@ export async function POST(request, { params }) {
  */
 export async function DELETE(request, { params }) {
   try {
-    const { id: userId } = params;
+    const { id: userId } = await params;
     const { searchParams } = new URL(request.url);
     const accountId = searchParams.get('accountId');
 
@@ -205,7 +205,7 @@ export async function DELETE(request, { params }) {
  */
 export async function PUT(request, { params }) {
   try {
-    const { id: userId } = params;
+    const { id: userId } = await params;
     const { searchParams } = new URL(request.url);
     const accountId = searchParams.get('accountId');
     const isPrimary = searchParams.get('isPrimary') === 'true';

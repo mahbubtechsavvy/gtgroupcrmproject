@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { ExecutiveHero, ExecutiveSection, MetricGrid } from '@/components/crm/ExecutivePage';
 import FlagIcon from '@/components/ui/FlagIcon';
@@ -26,6 +26,8 @@ const PIPELINE_STAGES = [
 ];
 
 export default function StudentProfile({ params }) {
+  const unwrappedParams = use(params);
+  const studentId = unwrappedParams.id;
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -51,13 +53,13 @@ export default function StudentProfile({ params }) {
         programs(id, name, degree_level),
         documents(*)
       `)
-      .eq('id', params.id)
+      .eq('id', studentId)
       .single();
 
     setStudent(data);
     setPhotoUrl(data?.documents?.find(d => d.document_type === 'Student Photo')?.file_url || null);
     setLoading(false);
-  }, [params.id]);
+  }, [studentId]);
 
   useEffect(() => {
     loadData();

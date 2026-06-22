@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
  * Fetch the current user's chat preferences (language, auto-translate, etc.)
  */
 export async function GET() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -53,7 +53,7 @@ export async function GET() {
  * }
  */
 export async function PUT(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

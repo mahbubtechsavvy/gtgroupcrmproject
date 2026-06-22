@@ -14,7 +14,7 @@ import { NextResponse } from 'next/server';
  * }
  */
 export async function POST(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

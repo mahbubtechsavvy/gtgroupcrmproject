@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { retryFailedEmail } from '@/lib/emailRouter';
 
 export async function POST(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   try {
     const { logId } = await request.json();
 

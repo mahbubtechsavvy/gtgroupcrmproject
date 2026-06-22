@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { connectGoogleAccount } from '@/lib/emailAccountManager';
 
 export async function POST(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   try {
     const { code, emailAccountId } = await request.json();
 

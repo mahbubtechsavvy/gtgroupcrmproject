@@ -3,14 +3,14 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const { data: task, error } = await supabase
       .from('tasks')
@@ -32,14 +32,14 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
 
     // Prevent changing created_by
@@ -73,14 +73,14 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if user is the creator or is a super admin
     const { data: task } = await supabase

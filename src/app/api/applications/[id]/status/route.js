@@ -2,10 +2,10 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export async function PUT(request, { params }) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // 1. Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

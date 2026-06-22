@@ -12,7 +12,7 @@ import { generateEventNotificationEmail } from '@/lib/emailTemplates/eventNotifi
 import { generateOnlineMeetingAlertEmail } from '@/lib/emailTemplates/onlineMeetingAlert';
 
 export async function POST(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   try {
     const {
       eventId,

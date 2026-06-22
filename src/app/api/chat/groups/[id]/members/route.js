@@ -7,14 +7,14 @@ import { NextResponse } from 'next/server';
  */
 export async function GET(request, { params }) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const { data: members, error } = await supabase
       .from('chat_group_members')
@@ -39,14 +39,14 @@ export async function GET(request, { params }) {
  */
 export async function POST(request, { params }) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { user_id, role = 'member' } = body;
 
@@ -133,14 +133,14 @@ export async function POST(request, { params }) {
  */
 export async function DELETE(request, { params }) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('user_id');
 

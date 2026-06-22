@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 // PATCH /api/chat/messages/:id - Edit a message
 export async function PATCH(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -39,7 +39,7 @@ export async function PATCH(request) {
 
 // DELETE /api/chat/messages/:id - Soft delete a message
 export async function DELETE(request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
