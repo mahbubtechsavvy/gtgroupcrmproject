@@ -22,21 +22,24 @@ export async function GET(request) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 403 });
     }
 
-    // 3. Query events with office level security
-    let query = supabase.from('events').select('*, users(full_name)').order('start_date', { ascending: true });
+    // 3. Query marketing assets
+    let query = supabase
+      .from('marketing_assets')
+      .select('*, users:created_by (full_name)')
+      .order('created_at', { ascending: false });
     
     const isSuperAdmin = ['ceo', 'coo', 'it_manager'].includes(profile.role);
     if (!isSuperAdmin) {
       query = query.eq('office_id', profile.office_id);
     }
 
-    const { data: events, error: fetchError } = await query;
+    const { data: assets, error: fetchError } = await query;
     if (fetchError) throw fetchError;
 
-    return NextResponse.json(events, { status: 200 });
+    return NextResponse.json(assets, { status: 200 });
 
   } catch (error) {
-    console.error('[Events GET Error]', error);
+    console.error('[Marketing Assets GET Error]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -51,7 +54,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Fetch user profile
+    // 2. Fetch profile
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('id, office_id, role')
@@ -62,34 +65,28 @@ export async function POST(request) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 403 });
     }
 
-    // 3. Parse request body
+    // 3. Parse input
     const body = await request.json();
-    const { title, description, type, start_date, end_date, location, is_online, meeting_link, max_capacity, registration_deadline, is_exclusive } = body;
+    const { title, type, content, file_url, tags = [], ai_generated = false } = body;
 
-    if (!title || !type || !start_date) {
-      return NextResponse.json({ error: 'title, type, and start_date are required' }, { status: 400 });
+    if (!title || !type) {
+      return NextResponse.json({ error: 'title and type are required' }, { status: 400 });
     }
 
-    // 4. Construct event entry
-    const newEvent = {
+    const newAsset = {
       office_id: profile.office_id,
       title,
-      description,
       type,
-      start_date,
-      end_date: end_date || null,
-      location: location || '',
-      is_online: is_online || false,
-      meeting_link: meeting_link || '',
-      max_capacity: max_capacity ? parseInt(max_capacity) : null,
-      registration_deadline: registration_deadline || null,
-      is_exclusive: is_exclusive || false,
+      content: content || '',
+      file_url: file_url || null,
+      tags: tags || [],
+      ai_generated,
       created_by: user.id
     };
 
     const { data: dbData, error: dbError } = await supabase
-      .from('events')
-      .insert(newEvent)
+      .from('marketing_assets')
+      .insert(newAsset)
       .select()
       .single();
 
@@ -98,7 +95,7 @@ export async function POST(request) {
     return NextResponse.json(dbData, { status: 201 });
 
   } catch (error) {
-    console.error('[Events POST Error]', error);
+    console.error('[Marketing Assets POST Error]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

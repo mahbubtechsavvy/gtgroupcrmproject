@@ -43,6 +43,17 @@ const NAV_ITEMS = [
     superAdminOnly: false,
   },
   {
+    label: 'University Applications',
+    href: '/applications',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+        <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
     label: 'Consultations',
     href: '/appointments',
     icon: (
@@ -118,6 +129,64 @@ const NAV_ITEMS = [
   },
   { isHeader: true, label: 'INTERNAL WORKFLOW' },
   {
+    label: 'GT AI Platform',
+    href: '/ai',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2a10 10 0 0 1 7.54 16.59l-1.42-1.42A8 8 0 1 0 6.64 16.2L5.2 17.62A10 10 0 0 1 12 2z" />
+        <circle cx="12" cy="12" r="4" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
+    label: 'Events & Expos',
+    href: '/events',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
+    label: 'AI Marketing',
+    href: '/marketing',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 19V5m0 14-4-4m4 4 4-4" />
+        <path d="M19 5H5v10h14z" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
+    label: 'GT Social Hub',
+    href: '/social',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
+    label: 'Document Review',
+    href: '/document-review',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
     label: 'Global Comms & Chat',
     href: '/chat',
     icon: (
@@ -155,6 +224,29 @@ const NAV_ITEMS = [
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
+    label: 'Revenue & FMS',
+    href: '/finance',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
+        <line x1="12" y1="4" x2="12" y2="20" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+      </svg>
+    ),
+    superAdminOnly: false,
+  },
+  {
+    label: 'Subscription Billing',
+    href: '/billing',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
+        <line x1="2" y1="10" x2="22" y2="10" />
       </svg>
     ),
     superAdminOnly: false,
@@ -261,6 +353,16 @@ const NAV_ITEMS = [
     superAdminOnly: true,
   },
   { isHeader: true, label: 'SYSTEM' },
+  {
+    label: 'Super Admin Control',
+    href: '/admin',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+    ),
+    superAdminOnly: true,
+  },
   {
     label: 'Settings',
     href: '/settings',

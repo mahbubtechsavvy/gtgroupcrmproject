@@ -11,7 +11,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Fetch user profile
+    // 2. Fetch profile
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('id, office_id, role')
@@ -22,21 +22,30 @@ export async function GET(request) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 403 });
     }
 
-    // 3. Query events with office level security
-    let query = supabase.from('events').select('*, users(full_name)').order('start_date', { ascending: true });
-    
+    // 3. Build query with joins
+    let query = supabase
+      .from('university_applications')
+      .select(`
+        *,
+        students(full_name, email),
+        universities(name, country),
+        programs(name)
+      `)
+      .order('created_at', { ascending: false });
+
+    // 4. Respect office boundaries (only CEO, COO, IT Manager bypass)
     const isSuperAdmin = ['ceo', 'coo', 'it_manager'].includes(profile.role);
     if (!isSuperAdmin) {
       query = query.eq('office_id', profile.office_id);
     }
 
-    const { data: events, error: fetchError } = await query;
-    if (fetchError) throw fetchError;
+    const { data, error } = await query;
+    if (error) throw error;
 
-    return NextResponse.json(events, { status: 200 });
+    return NextResponse.json({ data }, { status: 200 });
 
   } catch (error) {
-    console.error('[Events GET Error]', error);
+    console.error('[API Applications GET Error]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -44,14 +53,14 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const supabase = createServerSupabaseClient();
-    
+
     // 1. Authenticate user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Fetch user profile
+    // 2. Fetch profile
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('id, office_id, role')
@@ -64,41 +73,47 @@ export async function POST(request) {
 
     // 3. Parse request body
     const body = await request.json();
-    const { title, description, type, start_date, end_date, location, is_online, meeting_link, max_capacity, registration_deadline, is_exclusive } = body;
+    const { student_id, university_id, program_id, intake_year, intake_month, notes } = body;
 
-    if (!title || !type || !start_date) {
-      return NextResponse.json({ error: 'title, type, and start_date are required' }, { status: 400 });
+    if (!student_id || !university_id || !program_id) {
+      return NextResponse.json({ error: 'student_id, university_id, and program_id are required' }, { status: 400 });
     }
 
-    // 4. Construct event entry
-    const newEvent = {
+    // 4. Construct record
+    const newRecord = {
+      student_id,
+      university_id,
+      program_id,
       office_id: profile.office_id,
-      title,
-      description,
-      type,
-      start_date,
-      end_date: end_date || null,
-      location: location || '',
-      is_online: is_online || false,
-      meeting_link: meeting_link || '',
-      max_capacity: max_capacity ? parseInt(max_capacity) : null,
-      registration_deadline: registration_deadline || null,
-      is_exclusive: is_exclusive || false,
-      created_by: user.id
+      submitted_by: user.id,
+      status: 'draft',
+      intake_year: intake_year ? parseInt(intake_year) : null,
+      intake_month: intake_month || '',
+      notes: notes || '',
     };
 
-    const { data: dbData, error: dbError } = await supabase
-      .from('events')
-      .insert(newEvent)
+    const { data, error } = await supabase
+      .from('university_applications')
+      .insert(newRecord)
       .select()
       .single();
 
-    if (dbError) throw dbError;
+    if (error) throw error;
 
-    return NextResponse.json(dbData, { status: 201 });
+    // Log status history (Initial transition: NULL -> draft)
+    const historyRecord = {
+      application_id: data.id,
+      from_status: null,
+      to_status: 'draft',
+      changed_by: user.id,
+      note: 'Initial application record created.'
+    };
+    await supabase.from('application_status_history').insert(historyRecord);
+
+    return NextResponse.json({ data }, { status: 201 });
 
   } catch (error) {
-    console.error('[Events POST Error]', error);
+    console.error('[API Applications POST Error]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -2,7 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { Languages, Volume2, VolumeX, Moon, Sun, Loader2, Save, Globe } from 'lucide-react';
-import { SUPPORTED_LANGUAGES } from '@/app/api/chat/preferences/route';
+// Supported languages for the translation engine
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'ko', name: 'Korean', flag: '🇰🇷' },
+  { code: 'bn', name: 'Bengali', flag: '🇧🇩' },
+  { code: 'vi', name: 'Vietnamese', flag: '🇻🇳' },
+  { code: 'si', name: 'Sinhala', flag: '🇱🇰' },
+  { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+  { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
+  { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
+  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+  { code: 'fr', name: 'French', flag: '🇫🇷' },
+  { code: 'de', name: 'German', flag: '🇩🇪' },
+];
 import styles from '../settings.module.css';
 
 export default function ChatPreferences() {

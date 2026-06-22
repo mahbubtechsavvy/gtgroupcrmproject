@@ -1,0 +1,19 @@
+{
+  "name": "gt-group-crm-mobile",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "expo": "~51.0.0",
+    "expo-status-bar": "~1.12.1",
+    "react": "18.2.0",
+    "react-native": "0.74.1",
+    "@supabase/supabase-js": "^2.49.4",
+    "zustand": "^4.5.2"
+  },
+  "private": true
+}
